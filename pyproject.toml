@@ -1,0 +1,56 @@
+[project]
+name = "azure-functions-logging"
+description = "Developer-friendly logging helpers for Azure Functions Python"
+authors = [{ name = "Yeongseon Choe", email = "yeongseon.choe@gmail.com" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10,<3.15"
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "hatch",
+    "pytest",
+    "pytest-cov",
+    "ruff==0.15.5",
+    "black==26.3.0",
+    "mypy==1.19.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.version]
+path = "src/azure_functions_logging/__init__.py"
+
+[tool.hatch.envs.default]
+python = "3.10"
+features = ["dev"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest -v tests"
+style = "ruff check src tests"
+format = "ruff format src tests && black src tests"
+typecheck = "mypy src tests"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313", "py314"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
