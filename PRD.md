@@ -4,103 +4,118 @@
 
 ## 1. Overview
 
-`azure-functions-logging` is a lightweight logging helper designed to improve the readability of
-logs when developing Azure Functions using Python.
+`azure-functions-logging` is a lightweight logging helper designed to improve the developer
+experience of working with logs in Azure Functions Python v2.
 
-Developers often rely heavily on logs during local development and debugging. However, the default
-logging experience in Azure Functions Python can be difficult to read, especially when many log
-lines appear in rapid succession.
+Developers building Azure Functions in Python face several logging pain points: visually
+dense output, lack of invocation context in log lines, no cold start visibility, and the
+difficulty of correlating logs across requests. The Azure Functions worker's logging
+pipeline (root logger → `AsyncLoggingHandler` → gRPC → host) adds constraints that
+generic logging solutions do not account for.
 
-This project aims to make logs easier to read, visually distinguishable, and more developer-friendly,
-particularly during local development.
-
-The initial focus is not on building a full observability platform, but rather on improving the
-developer experience of working with logs.
+This project provides a thin layer over Python's standard `logging` module that is
+specifically designed to work safely within the Azure Functions worker architecture.
 
 ## 2. Goals
 
 ### Primary Goals
 
-- Improve the readability of logs in Azure Functions Python.
-- Provide colorized log output for better visual distinction between log levels.
-- Allow developers to quickly understand execution flow through cleaner log formatting.
-- Provide a simple setup that works with minimal configuration.
-- Maintain full compatibility with Python's standard logging module.
+- Provide colorized, readable log output for local development.
+- Automatically inject invocation context (invocation_id, function_name, trace_id) into log records.
+- Detect and surface cold starts without user intervention.
+- Stay fully compatible with the Azure Functions worker's logging pipeline.
+- Require minimal setup — one-liner configuration.
+- Maintain full compatibility with Python's standard `logging` module.
 
-## 3. Non-Goals
+### Design Principles
 
-The initial version will not attempt to provide the following:
+- **Principle 1**: The root logger is never modified. All configuration targets named child loggers or installs safe filters.
+- **Principle 2**: In Azure environments, behavior is safe by default — no forced colors, no handler additions, no interference with the worker's `AsyncLoggingHandler`.
+- **Principle 3**: Context injection failures never cause application failures. Logging helpers are auxiliary tools.
+- **Principle 4**: The API surface stays as close to standard `logging` as possible.
 
-- Distributed tracing
-- Full observability tooling
-- Log aggregation systems
-- External logging backend integrations
+## 3. Non-Goals (v0.1.0)
+
+The initial version does not provide:
+
+- Full JSON structured logging (planned for v0.2.0)
+- `host.json` log level conflict warning (planned for v0.2.0)
+- Sampling or log volume control
 - OpenTelemetry integration
-- Complex configuration systems
-
-These may be considered in future versions, but are not required for the MVP.
+- Async context propagation across threads
+- Distributed tracing
+- Log aggregation or external backend integrations
 
 ## 4. Target Users
 
 ### Primary Users
 
-- Developers building APIs with Azure Functions (Python)
+- Developers building APIs with Azure Functions (Python v2)
 - Developers debugging Azure Functions locally
-- Developers who frequently rely on logs during development
+- Developers who need invocation context in their log lines
 
 ### Secondary Users
 
 - Python serverless developers
-- Developers building lightweight microservices
+- Teams adopting the azure-functions-* ecosystem
 
 ## 5. Problem Statement
 
 When developing Azure Functions in Python:
 
-- Logs can be visually dense and difficult to scan
-- Errors do not stand out clearly from other logs
-- Execution flow can be difficult to follow when many logs are printed
-- Default log formatting is often not optimized for human readability
-
-Developers need a simple way to make logs clearer and easier to interpret during development.
+- Logs are visually dense and difficult to scan
+- Errors do not stand out clearly from info-level noise
+- There is no easy way to see which invocation produced which log line
+- Cold starts are invisible without manual instrumentation
+- `logging.basicConfig()` conflicts with the worker's handler setup
+- The worker's `AsyncLoggingHandler` on the root logger means structured `extra` fields
+  are lost over gRPC — only the formatted message string survives
+- `traceparent` / `trace_id` is available on all trigger types but rarely surfaced in logs
 
 ## 6. Key Use Cases
 
-### Use Case 1 - Local Development
+### Use Case 1 — Local Development
 
 A developer runs Azure Functions locally and monitors logs while testing endpoints.
 
-Problem:
-Logs are difficult to read quickly.
+Problem: Logs are difficult to read quickly.
+Solution: Colorized log levels allow developers to immediately identify warnings and errors.
 
-Solution:
-Colorized log levels allow developers to immediately identify warnings and errors.
-
-### Use Case 2 - Debugging Failures
+### Use Case 2 — Debugging Failures
 
 A function throws an exception during execution.
 
-Problem:
-The error is buried among other log lines.
+Problem: The error is buried among other log lines.
+Solution: Error logs are highlighted with readable stack traces.
 
-Solution:
-Error logs are highlighted and visually separated for quick identification.
+### Use Case 3 — Invocation Correlation
 
-### Use Case 3 - Understanding Execution Flow
+A developer needs to trace which log lines belong to which function invocation.
 
-A developer prints logs during request handling.
+Problem: Default logs do not include invocation_id or function_name.
+Solution: `inject_context()` automatically sets invocation_id, function_name, and trace_id
+on all subsequent log records via contextvars.
 
-Problem:
-Logs do not clearly indicate the context of execution.
+### Use Case 4 — Cold Start Visibility
 
-Solution:
-Cleaner formatting helps developers quickly understand what happened during execution.
+A developer wants to know when a cold start occurs.
 
-## 7. Features
+Problem: Cold starts are invisible without manual instrumentation.
+Solution: `inject_context()` detects and flags the first invocation as a cold start.
+
+### Use Case 5 — Context Binding
+
+A developer wants to add custom context (user_id, operation) to log lines.
+
+Problem: Manually passing context to every log call is tedious.
+Solution: `logger.bind(user_id="abc")` returns a new logger that includes the context
+on every log call.
+
+## 7. Features (v0.1.0)
 
 ### 7.1 Colorized Log Output
 
-Log levels should be displayed with different colors.
+Log levels are displayed with different colors in local development.
 
 | Level | Color |
 | --- | --- |
@@ -110,31 +125,23 @@ Log levels should be displayed with different colors.
 | ERROR | Red |
 | CRITICAL | Bold Red |
 
-This allows developers to quickly distinguish between log types.
+### 7.2 Clean Log Format with Context
 
-### 7.2 Clean Log Format
-
-Logs should be formatted for readability.
-
-Example format:
+Logs are formatted for readability with optional context fields appended.
 
 ```text
-[TIME] [LEVEL] [LOGGER] message
+HH:MM:SS LEVEL    logger_name  message  [invocation_id=xxx, function_name=yyy]
 ```
 
 Example output:
 
 ```text
-12:41:23 INFO  http_trigger  Processing request
-12:41:24 WARN  http_trigger  Missing parameter
-12:41:25 ERROR http_trigger  Validation failed
+12:41:23 INFO     http_trigger  Processing request  [invocation_id=abc-123, function_name=my_func, cold_start=true]
+12:41:24 WARNING  http_trigger  Missing parameter  [invocation_id=abc-123, function_name=my_func]
+12:41:25 ERROR    http_trigger  Validation failed  [invocation_id=abc-123, function_name=my_func]
 ```
 
 ### 7.3 Simple Setup
-
-Developers should be able to enable improved logging with minimal configuration.
-
-Example:
 
 ```python
 from azure_functions_logging import setup_logging
@@ -142,11 +149,11 @@ from azure_functions_logging import setup_logging
 setup_logging()
 ```
 
+Behavior is environment-aware:
+- **Standalone local development**: Adds `StreamHandler` with `ColorFormatter`
+- **Azure / Core Tools**: Installs `ContextFilter` only (no handlers, no level changes)
+
 ### 7.4 Logger Helper
-
-Provide a convenient helper to create loggers.
-
-Example:
 
 ```python
 from azure_functions_logging import get_logger
@@ -155,106 +162,107 @@ logger = get_logger(__name__)
 logger.info("Processing request")
 ```
 
-### 7.5 Exception-Friendly Output
+Returns a `FunctionLogger` wrapper with `bind()` and `clear_context()` methods.
 
-Exceptions should be printed in a more readable way, improving visibility of stack traces during
-debugging.
-
-Example:
-
-```text
-ERROR  http_trigger
-ValueError: invalid input
-```
-
-## 8. Installation and Basic Usage
-
-### Installation
-
-```bash
-pip install azure-functions-logging
-```
-
-### Basic Usage
+### 7.5 Invocation Context Injection
 
 ```python
-from azure_functions_logging import get_logger, setup_logging
+from azure_functions_logging import inject_context
 
-setup_logging()
-
-logger = get_logger(__name__)
-logger.info("Processing request")
+def my_function(req, context):
+    inject_context(context)
+    logger.info("Handling request")  # includes invocation_id, function_name, trace_id
 ```
+
+Context is propagated via `contextvars` and copied to `LogRecord` attributes by a
+`ContextFilter`. This covers all loggers, including third-party libraries.
+
+### 7.6 Context Binding
+
+```python
+bound = logger.bind(user_id="abc", operation="checkout")
+bound.info("Processing")  # includes user_id + operation + invocation context
+```
+
+`bind()` returns a new immutable logger — it does not mutate the original.
+
+### 7.7 Cold Start Detection
+
+Automatically detected on first invocation. Included as `cold_start=true` in log output.
+
+### 7.8 trace_id Extraction
+
+Parsed from `context.trace_context.trace_parent` (W3C Trace Context format).
+The extracted `trace_id` matches Application Insights `operation_Id`.
+
+## 8. Public API
+
+Three exports plus a logger class:
+
+| Export | Type | Purpose |
+| --- | --- | --- |
+| `setup_logging()` | Function | Configure logging for the current environment |
+| `get_logger(name)` | Function | Create a `FunctionLogger` instance |
+| `inject_context(context)` | Function | Set invocation context from `func.Context` |
+| `FunctionLogger` | Class | Logger wrapper with `bind()` and `clear_context()` |
 
 ## 9. Architecture
 
-High-level module structure:
-
 ```text
-azure_functions_logging
-|
-|- formatter
-|  `- color_formatter.py
-|
-|- logger
-|  `- logger_factory.py
-|
-|- config
-|  `- logging_setup.py
-|
-`- utils
-   `- exception_formatter.py
+src/azure_functions_logging/
+├── __init__.py       # Public API: setup_logging, get_logger, inject_context
+├── _context.py       # contextvars, ContextFilter, inject_context, cold_start
+├── _formatter.py     # ColorFormatter (local dev), context-aware formatting
+├── _logger.py        # FunctionLogger wrapper with bind() convenience
+└── _setup.py         # setup_logging(), environment detection
 ```
 
-Components:
+Core mechanism:
 
-- `formatter`: Responsible for color formatting
-- `logger`: Logger creation helpers
-- `config`: Logging configuration setup
-- `utils`: Helper utilities
-
-## 10. Future Enhancements
-
-Potential features for future versions:
-
-### Structured Logging
-
-Optional JSON logging mode.
-
-Example:
-
-```json
-{
-  "level": "INFO",
-  "message": "processing request",
-  "service": "orders"
-}
+```
+inject_context(func_context)
+  → sets contextvars (invocation_id, function_name, trace_id, cold_start)
+    → ContextFilter copies contextvars → LogRecord attributes
+      → Formatter reads record.invocation_id, etc.
 ```
 
-### Invocation Context Support
+## 10. Environment Detection
 
-Automatic inclusion of Azure Functions context information such as invocation ID.
+| Signal | Meaning |
+| --- | --- |
+| `FUNCTIONS_WORKER_RUNTIME` present | Functions environment (Azure or local Core Tools) |
+| `WEBSITE_INSTANCE_ID` present | Azure-hosted (not local Core Tools) |
+| Neither present | Standalone local development |
 
-### Request Correlation
+## 11. Future Enhancements
 
-Support for request identifiers in HTTP-triggered functions.
+### v0.2.0 — Production Features
 
-### JSON Logging Mode
+- JSON structured formatter (`JsonFormatter`)
+- `host.json` log level conflict warning
+- `logger.bind()` for persistent context fields
 
-Enable structured logs for production environments.
+### v0.3.0+ — Advanced
 
-## 11. Success Metrics
+- Log sampling / volume control
+- `.catch()` decorator for exception logging
+- Async context propagation across threads
+- Full OpenTelemetry correlation
 
-The success of the project can be evaluated through:
+## 12. Success Metrics
 
-- Developer adoption
+- Developer adoption and PyPI download statistics
 - GitHub stars and community feedback
-- PyPI download statistics
 - Usage in real-world Azure Functions projects
+- Reduction in "how to log in Azure Functions" support questions
 
-## 12. Positioning
+## 13. Positioning
 
-`azure-functions-logging` is designed as a small developer experience improvement tool, helping
-developers work more comfortably with logs during Azure Functions Python development.
+`azure-functions-logging` is part of the `azure-functions-*` Python ecosystem:
 
-The focus is simplicity, readability, and minimal setup.
+- `azure-functions-validation` — Request/response validation
+- `azure-functions-openapi` — OpenAPI generation
+- `azure-functions-logging` — Developer-friendly logging
+- `azure-functions-doctor` — Project diagnostics
+
+The focus is simplicity, readability, and Azure Functions-specific safety.
