@@ -7,3 +7,11 @@ Current status:
 - Product direction lives in `PRD.md`
 - Runtime implementation is intentionally not added yet
 - Packaging, test, and CI scaffolding are prepared for future development
+
+
+## Disclaimer
+
+This project is an independent community project and is not affiliated with,
+endorsed by, or maintained by Microsoft.
+
+Azure and Azure Functions are trademarks of Microsoft Corporation.
