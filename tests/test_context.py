@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+import logging
+from types import SimpleNamespace
+
+import pytest
+
+import azure_functions_logging._context as ctx_mod
+from azure_functions_logging._context import (
+    ContextFilter,
+    _check_cold_start,
+    _extract_trace_id,
+    cold_start_var,
+    function_name_var,
+    inject_context,
+    invocation_id_var,
+    trace_id_var,
+)
+
+
+@pytest.fixture(autouse=True)
+def reset_context_state() -> None:
+    ctx_mod._cold_start = True
+    invocation_id_var.set(None)
+    function_name_var.set(None)
+    trace_id_var.set(None)
+    cold_start_var.set(None)
+
+
+def test_context_filter_adds_default_none_values_to_record() -> None:
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="hello",
+        args=(),
+        exc_info=None,
+    )
+    keep = ContextFilter().filter(record)
+
+    assert keep is True
+    assert record.invocation_id is None  # type: ignore[attr-defined]
+    assert record.function_name is None  # type: ignore[attr-defined]
+    assert record.trace_id is None  # type: ignore[attr-defined]
+    assert record.cold_start is None  # type: ignore[attr-defined]
+
+
+def test_inject_context_sets_all_contextvars() -> None:
+    context = SimpleNamespace(
+        invocation_id="inv-1",
+        function_name="fn-a",
+        trace_context=SimpleNamespace(
+            trace_parent="00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+        ),
+    )
+
+    inject_context(context)
+
+    assert invocation_id_var.get() == "inv-1"
+    assert function_name_var.get() == "fn-a"
+    assert trace_id_var.get() == "4bf92f3577b34da6a3ce929d0e0e4736"
+    assert cold_start_var.get() is True
+
+
+def test_inject_context_with_mock_context_object() -> None:
+    class TraceContext:
+        trace_parent = "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01"
+
+    class MockContext:
+        invocation_id = "inv-mock"
+        function_name = "mock-fn"
+        trace_context = TraceContext()
+
+    inject_context(MockContext())
+
+    assert invocation_id_var.get() == "inv-mock"
+    assert function_name_var.get() == "mock-fn"
+    assert trace_id_var.get() == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+
+def test_inject_context_missing_attributes_does_not_fail() -> None:
+    class MissingContext:
+        pass
+
+    inject_context(MissingContext())
+
+    assert invocation_id_var.get() is None
+    assert function_name_var.get() is None
+    assert trace_id_var.get() is None
+    assert cold_start_var.get() is True
+
+
+def test_inject_context_with_none_context() -> None:
+    inject_context(None)
+
+    assert invocation_id_var.get() is None
+    assert function_name_var.get() is None
+    assert trace_id_var.get() is None
+    assert cold_start_var.get() is True
+
+
+def test_extract_trace_id_valid_traceparent() -> None:
+    trace_parent = "00-1234567890abcdef1234567890abcdef-fedcba0987654321-01"
+    assert _extract_trace_id(trace_parent) == "1234567890abcdef1234567890abcdef"
+
+
+@pytest.mark.parametrize("trace_parent", [None, "", "bad", "00-only"])
+def test_extract_trace_id_invalid_or_empty(trace_parent: str | None) -> None:
+    assert _extract_trace_id(trace_parent) is None
+
+
+def test_cold_start_first_true_then_false() -> None:
+    assert _check_cold_start() is True
+    assert _check_cold_start() is False
+    assert _check_cold_start() is False
+
+
+def test_context_filter_reads_contextvars_after_inject_context() -> None:
+    context = SimpleNamespace(
+        invocation_id="inv-z",
+        function_name="fn-z",
+        trace_context=SimpleNamespace(
+            trace_parent="00-ffffffffffffffffffffffffffffffff-1111111111111111-01"
+        ),
+    )
+    inject_context(context)
+
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="hello",
+        args=(),
+        exc_info=None,
+    )
+    ContextFilter().filter(record)
+
+    assert record.invocation_id == "inv-z"  # type: ignore[attr-defined]
+    assert record.function_name == "fn-z"  # type: ignore[attr-defined]
+    assert record.trace_id == "ffffffffffffffffffffffffffffffff"  # type: ignore[attr-defined]
+    assert record.cold_start is True  # type: ignore[attr-defined]
