@@ -1,13 +1,68 @@
 # azure-functions-logging
 
-Repository scaffold for the `azure-functions-logging` project.
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
+[![CI](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Current status:
+Developer-friendly logging helpers for the **Azure Functions Python v2 programming model**.
 
-- Product direction lives in `PRD.md`
-- Runtime implementation is intentionally not added yet
-- Packaging, test, and CI scaffolding are prepared for future development
+## Why Use It
 
+Azure Functions Python handlers share the same logging pain points:
+
+- log output is visually dense and hard to scan
+- errors do not stand out from info-level noise
+- default formatting is not optimized for human readability
+
+`azure-functions-logging` provides colorized, cleanly formatted log output that works with Python's standard `logging` module and requires minimal setup.
+
+## Scope
+
+- Azure Functions Python **v2 programming model**
+- Python's standard `logging` module
+- Colorized log output for local development
+- Clean log formatting for readability
+
+This package does **not** target distributed tracing, log aggregation, or OpenTelemetry integration.
+
+## Features
+
+- Colorized log levels (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
+- Clean `[TIME] [LEVEL] [LOGGER] message` format
+- `setup_logging()` one-liner configuration
+- `get_logger(__name__)` helper for convenient logger creation
+- Exception-friendly output with readable stack traces
+- Compatible with Python's standard `logging` module
+
+## Installation
+
+```bash
+pip install azure-functions-logging
+```
+
+## Quick Start
+
+```python
+from azure_functions_logging import get_logger, setup_logging
+
+setup_logging()
+
+logger = get_logger(__name__)
+logger.info("Processing request")
+```
+
+## Development
+
+```bash
+git clone https://github.com/yeongseon/azure-functions-logging.git
+cd azure-functions-logging
+pip install -e .[dev]
+```
+
+## Documentation
+
+- Product requirements: `PRD.md`
 
 ## Disclaimer
 
@@ -15,3 +70,7 @@ This project is an independent community project and is not affiliated with,
 endorsed by, or maintained by Microsoft.
 
 Azure and Azure Functions are trademarks of Microsoft Corporation.
+
+## License
+
+MIT
