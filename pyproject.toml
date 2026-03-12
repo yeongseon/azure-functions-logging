@@ -19,6 +19,11 @@ dev = [
     "bandit==1.9.4",
     "bandit[toml]",
 ]
+docs = [
+    "mkdocs<2.0",
+    "mkdocs-material<10.0",
+    "mkdocstrings[python]<1.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -32,7 +37,7 @@ path = "src/azure_functions_logging/__init__.py"
 
 [tool.hatch.envs.default]
 python = "3.10"
-features = ["dev"]
+features = ["dev", "docs"]
 
 [tool.hatch.envs.default.scripts]
 test = "pytest -v tests"

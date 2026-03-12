@@ -1,0 +1,48 @@
+site_name: Azure Functions Logging
+site_description: Developer-friendly logging helpers for Azure Functions Python
+site_author: Yeongseon Choe
+repo_url: https://github.com/yeongseon/azure-functions-logging
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quickstart: usage.md
+      - Development: development.md
+      - Testing: testing.md
+  - API Reference: api.md
+  - Architecture: architecture.md
+  - Troubleshooting: troubleshooting.md
+  - Security: security.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - tables
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tabbed
+  - pymdownx.details
+  - pymdownx.inlinehilite
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yeongseon/azure-functions-logging
+  copyright: |
+    (c) 2026 Yeongseon Choe -- MIT Licensed
