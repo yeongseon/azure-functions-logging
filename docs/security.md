@@ -1,46 +1,140 @@
 # Security
 
-The security of `azure-functions-logging` is a top priority. This document outlines our security policy and the process for reporting vulnerabilities.
+This document covers the security policy, threat model, and vulnerability reporting process for `azure-functions-logging`.
+
+## Reporting Vulnerabilities
+
+If you discover a security vulnerability, please report it responsibly.
+
+### Preferred Method
+
+Use GitHub's private vulnerability reporting feature:
+
+[Report a vulnerability](https://github.com/yeongseon/azure-functions-logging/security/advisories/new)
+
+### Alternative Method
+
+Email the maintainer: `yeongseon.choe@gmail.com`
+
+### What to Include
+
+- A clear description of the vulnerability
+- Steps to reproduce the issue
+- Assessment of potential impact
+- Suggested fix or mitigation, if available
+
+### Do Not
+
+- Open a public GitHub issue with vulnerability details
+- Share vulnerability details publicly before a fix is released
+- Exploit the vulnerability against production systems
+
+## Response Timeline
+
+- **Initial response**: Within 48 hours of receiving your report
+- **Status update**: Within 7 days
+- **Ongoing updates**: Until a fix or resolution is implemented
 
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
-| Latest Release | Yes |
-| Older Versions | No |
+| ------- | --------- |
+| 0.2.x | Yes |
+| 0.1.x | No |
 
-We provide security updates for the most recent stable release of the library. Users are encouraged to stay up to date with the latest version.
+Security fixes are applied to the latest release only. Users should upgrade to the latest version.
 
-## Reporting a Vulnerability
+## Threat Model
 
-If you discover a potential security vulnerability in `azure-functions-logging`, please report it to us as soon as possible.
+`azure-functions-logging` is a logging configuration library that runs within the same process as the Azure Functions host. Its security surface is limited by design.
 
-### Preferred Method
+### File System Access
 
-The preferred way to report a vulnerability is through the GitHub Security Advisory feature:
+**What the library reads**:
 
-[https://github.com/yeongseon/azure-functions-logging/security/advisories/new](https://github.com/yeongseon/azure-functions-logging/security/advisories/new)
+- `host.json` -- to detect log level conflicts (read-only, catches all I/O errors)
+- No other files are read at runtime
 
-### Alternative Method
+**What the library writes**:
 
-If you prefer not to use GitHub, you can send an email to:
+- Log output to `stdout`/`stderr` via Python's standard logging handlers
+- No files are written
 
-`yeongseon.choe@gmail.com`
+### Network Access
 
-## What to Include in Your Report
+The library makes **no network calls**. All functionality is local to the process.
 
-To help us investigate and address the issue efficiently, please include the following details:
+### Data Handling
 
-* A clear and concise description of the vulnerability.
-* Detailed steps to reproduce the issue.
-* An assessment of the potential impact.
-* A suggested fix or mitigation strategy, if available.
+The library processes log messages that may contain sensitive data (request parameters, user IDs, etc.). It does not:
 
-## Our Response Timeline
+- Store log messages beyond the standard logging handler output
+- Send log data to external services
+- Cache or persist any data
+- Modify log message content
 
-* We will provide an initial response within 48 hours of receiving your report.
-* We will provide a status update on the investigation within 7 days.
-* We will keep you informed of the progress until a fix or resolution is implemented.
+Log output goes to the standard Python logging handlers, which in Azure Functions are captured by the Functions host. Data handling beyond that point is the responsibility of the Azure Functions runtime and any configured log sinks.
 
-!!! warning
-    Please do not share details of the vulnerability publicly until a fix has been released and we have agreed on a disclosure timeline.
+### Context Fields
+
+`inject_context()` extracts the following fields from the Azure Functions context object:
+
+- `invocation_id` -- Azure-generated UUID for the invocation
+- `function_name` -- name of the Azure Function
+- `trace_id` -- distributed tracing identifier
+
+These fields are attached to log records. They do not contain user data or secrets, but they are included in log output. Ensure your log sinks handle these fields according to your data retention policies.
+
+### Dependencies
+
+This package has **zero runtime dependencies**. It uses only the Python standard library (`logging`, `json`, `contextvars`, `os`).
+
+Development dependencies (not installed at runtime):
+
+| Package | Purpose |
+| ------- | ------- |
+| pytest | Test runner |
+| mypy | Type checking |
+| ruff | Linting |
+| black | Code formatting |
+| bandit | Security scanning |
+
+### Supply Chain
+
+- The package is published to PyPI with version pinning
+- CI runs `bandit` security scanning on every pull request
+- Type checking via `mypy` in strict mode helps prevent type-related vulnerabilities
+- Pre-commit hooks enforce code quality checks before every commit
+
+## Best Practices
+
+### For users of this library
+
+- **Log sanitization**: Do not log sensitive data (passwords, API keys, tokens) directly. The library does not filter or redact log content.
+- **host.json**: Configure `host.json` log levels appropriately for your environment. The library warns about conflicts but cannot override Azure's host-level configuration.
+- **Version pinning**: Pin the package version in your `requirements.txt` or `pyproject.toml` to avoid unexpected behavior from new releases.
+- **Context data**: Be aware that `inject_context()` fields (invocation_id, function_name, trace_id) are included in log output. Configure log sinks and retention policies accordingly.
+
+### For contributors
+
+- Do not add external runtime dependencies
+- Do not add network calls to the library
+- Do not store or cache log data
+- Run `make security` (bandit) before submitting pull requests
+- Follow the principle of least privilege in all file and resource access
+- Validate and sanitize any input from external sources (host.json content)
+
+## Python Version Policy
+
+`azure-functions-logging` requires Python >= 3.10. This ensures:
+
+- Active CPython support with security patches
+- `contextvars` support for async-safe context propagation
+- Type annotation features (`str | None` union syntax)
+- Match statement support (Python 3.10+)
+
+Older Python versions are not supported and may contain known vulnerabilities.
+
+## License
+
+MIT License. See the [LICENSE](https://github.com/yeongseon/azure-functions-logging/blob/main/LICENSE) file for details.
