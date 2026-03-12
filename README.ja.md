@@ -10,42 +10,42 @@
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-logging/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
+他の言語: [English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh-CN.md)
 
-Developer-friendly logging helpers for the **Azure Functions Python v2 programming model**.
+**Azure Functions Python v2 プログラミングモデル**向けの、開発者に優しい logging ヘルパーです。
 
 ## Why Use It
 
-Azure Functions Python handlers share the same logging pain points:
+Azure Functions Python ハンドラーには、共通の logging の課題があります。
 
-- log output is visually dense and hard to scan
-- errors do not stand out from info-level noise
-- default formatting is not optimized for human readability
+- ログ出力が視覚的に密集しており、スキャンが困難
+- エラーが INFO レベルのノイズに埋もれて目立たない
+- デフォルトのフォーマットが人間にとって読みやすく最適化されていない
 
-`azure-functions-logging` provides colorized, cleanly formatted log output that works with Python's standard `logging` module and requires minimal setup.
+`azure-functions-logging` は、最小限のセットアップで色分けされ、きれいにフォーマットされたログ出力を提供します。Python の標準 `logging` モジュールと互換性があります。
 
 ## Scope
 
-- Azure Functions Python **v2 programming model**
-- Python's standard `logging` module
-- Colorized and JSON log output
-- Invocation context injection and cold start detection
+- Azure Functions Python **v2 プログラミングモデル**
+- Python 標準の `logging` モジュール
+- 色付けおよび JSON 形式のログ出力
+- 呼び出しコンテキストの注入 (Invocation context injection) とコールドスタートの検出
 
-This package does **not** target distributed tracing, log aggregation, or OpenTelemetry integration.
+このパッケージは、分散トレーシング、ログ集約、または OpenTelemetry との統合を目的としていません。
 
 ## Features
 
-- Colorized log levels (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
-- JSON structured log output for production and CI environments
-- Clean `[TIME] [LEVEL] [LOGGER] message` format
-- `setup_logging()` one-liner configuration
-- `get_logger(__name__)` helper for convenient logger creation
-- Automatic invocation context injection (invocation_id, function_name, trace_id)
-- Cold start detection without manual instrumentation
-- Context binding via `logger.bind(user_id="abc")`
-- `host.json` log level conflict warning
-- Exception-friendly output with readable stack traces
-- Compatible with Python's standard `logging` module
+- ログレベルの色分け (DEBUG はグレー、INFO は青、WARNING は黄色、ERROR は赤、CRITICAL は太字の赤)
+- 本番環境および CI 環境向けの JSON 構造化ログ出力
+- すっきりとした `[TIME] [LEVEL] [LOGGER] message` フォーマット
+- `setup_logging()` による一行での設定
+- 便利な logger 作成のための `get_logger(__name__)` ヘルパー
+- 呼び出しコンテキスト (invocation_id, function_name, trace_id) の自動注入
+- 手動のインストルメンテーションなしでのコールドスタート検出
+- `logger.bind(user_id="abc")` によるコンテキストのバインド
+- `host.json` のログレベル競合に関する警告
+- 読みやすいスタックトレースを含む例外出力
+- Python 標準の `logging` モジュールと互換
 
 ## Installation
 
@@ -101,14 +101,13 @@ pip install -e .[dev]
 
 ## Documentation
 
-- Product requirements: `PRD.md`
+- 製品要件: `PRD.md`
 
 ## Disclaimer
 
-This project is an independent community project and is not affiliated with,
-endorsed by, or maintained by Microsoft.
+このプロジェクトは独立したコミュニティプロジェクトであり、Microsoft と提携・承認・保守関係にはありません。
 
-Azure and Azure Functions are trademarks of Microsoft Corporation.
+Azure および Azure Functions は Microsoft Corporation の商標です。
 
 ## License
 

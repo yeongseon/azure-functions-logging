@@ -10,42 +10,42 @@
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-logging/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
+其他语言: [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md)
 
-Developer-friendly logging helpers for the **Azure Functions Python v2 programming model**.
+专为 **Azure Functions Python v2 编程模型** 设计的开发者友好型 logging 助手。
 
 ## Why Use It
 
-Azure Functions Python handlers share the same logging pain points:
+Azure Functions Python 处理程序通常面临以下 logging 痛点：
 
-- log output is visually dense and hard to scan
-- errors do not stand out from info-level noise
-- default formatting is not optimized for human readability
+- 日志输出过于密集，难以快速浏览
+- 错误信息淹没在 INFO 级别的日志中，不够醒目
+- 默认格式未针对人类阅读进行优化
 
-`azure-functions-logging` provides colorized, cleanly formatted log output that works with Python's standard `logging` module and requires minimal setup.
+`azure-functions-logging` 提供彩色且格式整洁的日志输出，兼容 Python 标准 `logging` 模块，且只需极简配置。
 
 ## Scope
 
-- Azure Functions Python **v2 programming model**
-- Python's standard `logging` module
-- Colorized and JSON log output
-- Invocation context injection and cold start detection
+- Azure Functions Python **v2 编程模型**
+- Python 标准 `logging` 模块
+- 彩色及 JSON 格式日志输出
+- 调用上下文注入 (Invocation context injection) 及冷启动检测
 
-This package does **not** target distributed tracing, log aggregation, or OpenTelemetry integration.
+本项目 **不** 涉及分布式追踪、日志聚合或 OpenTelemetry 集成。
 
 ## Features
 
-- Colorized log levels (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
-- JSON structured log output for production and CI environments
-- Clean `[TIME] [LEVEL] [LOGGER] message` format
-- `setup_logging()` one-liner configuration
-- `get_logger(__name__)` helper for convenient logger creation
-- Automatic invocation context injection (invocation_id, function_name, trace_id)
-- Cold start detection without manual instrumentation
-- Context binding via `logger.bind(user_id="abc")`
-- `host.json` log level conflict warning
-- Exception-friendly output with readable stack traces
-- Compatible with Python's standard `logging` module
+- 彩色日志级别（DEBUG 灰色，INFO 蓝色，WARNING 黄色，ERROR 红色，CRITICAL 粗体红色）
+- 适用于生产和 CI 环境的 JSON 结构化日志输出
+- 整洁的 `[TIME] [LEVEL] [LOGGER] message` 格式
+- `setup_logging()` 一行式配置
+- 便于创建 logger 的 `get_logger(__name__)` 助手
+- 自动注入调用上下文 (invocation_id, function_name, trace_id)
+- 无需手动埋点的冷启动检测
+- 通过 `logger.bind(user_id="abc")` 进行上下文绑定
+- `host.json` 日志级别冲突警告
+- 友好且易读的异常堆栈轨迹输出
+- 兼容 Python 标准 `logging` 模块
 
 ## Installation
 
@@ -101,14 +101,13 @@ pip install -e .[dev]
 
 ## Documentation
 
-- Product requirements: `PRD.md`
+- 产品需求文档: `PRD.md`
 
 ## Disclaimer
 
-This project is an independent community project and is not affiliated with,
-endorsed by, or maintained by Microsoft.
+本项目是独立的社区项目，与 Microsoft 没有关联，也未获得 Microsoft 的认可或维护。
 
-Azure and Azure Functions are trademarks of Microsoft Corporation.
+Azure 和 Azure Functions 是 Microsoft Corporation 的商标。
 
 ## License
 
