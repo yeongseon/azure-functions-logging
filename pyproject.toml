@@ -16,6 +16,8 @@ dev = [
     "ruff==0.15.5",
     "black==26.3.0",
     "mypy==1.19.1",
+    "bandit==1.9.4",
+    "bandit[toml]",
 ]
 
 [build-system]
@@ -34,18 +36,31 @@ features = ["dev"]
 
 [tool.hatch.envs.default.scripts]
 test = "pytest -v tests"
+cov = "pytest --cov-report=term-missing --cov-report=html --cov-report=xml tests/"
 style = "ruff check src tests"
 format = "ruff format src tests && black src tests"
 typecheck = "mypy src tests"
+lint = "hatch run style && hatch run typecheck"
+security = "python -m bandit -r src"
 
 [tool.pytest.ini_options]
-addopts = "-ra -q"
+addopts = "--cov=src/azure_functions_logging --cov-report=xml --cov-report=term-missing -ra -q"
 testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+exclude = ["tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+fixable = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["azure_functions_logging"]
+force-sort-within-sections = true
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.black]
 line-length = 100
@@ -54,3 +69,17 @@ target-version = ["py310", "py311", "py312", "py313", "py314"]
 [tool.mypy]
 python_version = "3.10"
 strict = true
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+
+[tool.coverage.run]
+branch = true
+source = ["src/azure_functions_logging"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
