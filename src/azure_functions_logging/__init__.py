@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 from ._context import inject_context
+from ._json_formatter import JsonFormatter
 from ._logger import FunctionLogger
 from ._setup import setup_logging
 
 __all__ = [
     "__version__",
     "FunctionLogger",
+    "JsonFormatter",
     "get_logger",
     "inject_context",
     "setup_logging",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 def get_logger(name: str | None = None) -> FunctionLogger:

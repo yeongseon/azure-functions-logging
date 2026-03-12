@@ -65,7 +65,7 @@ def _extract_trace_id(trace_parent: str | None) -> str | None:
         parts = trace_parent.split("-")
         if len(parts) >= 3:
             return parts[1]
-    except Exception:
+    except Exception:  # nosec B110 — Principle 3: context failures are silent
         pass
     return None
 
@@ -85,22 +85,22 @@ def inject_context(context: Any) -> None:
     """
     try:
         invocation_id_var.set(getattr(context, "invocation_id", None))
-    except Exception:
+    except Exception:  # nosec B110 — Principle 3: context failures are silent
         pass
 
     try:
         function_name_var.set(getattr(context, "function_name", None))
-    except Exception:
+    except Exception:  # nosec B110 — Principle 3: context failures are silent
         pass
 
     try:
         trace_context = getattr(context, "trace_context", None)
         trace_parent = getattr(trace_context, "trace_parent", None) if trace_context else None
         trace_id_var.set(_extract_trace_id(trace_parent))
-    except Exception:
+    except Exception:  # nosec B110 — Principle 3: context failures are silent
         pass
 
     try:
         cold_start_var.set(_check_cold_start())
-    except Exception:
+    except Exception:  # nosec B110 — Principle 3: context failures are silent
         pass

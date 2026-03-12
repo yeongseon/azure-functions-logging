@@ -238,9 +238,9 @@ inject_context(func_context)
 
 ### v0.2.0 — Production Features
 
-- JSON structured formatter (`JsonFormatter`)
-- `host.json` log level conflict warning
-- `logger.bind()` for persistent context fields
+- ~~JSON structured formatter (`JsonFormatter`)~~ — **Implemented in v0.2.0**
+- ~~`host.json` log level conflict warning~~ — **Implemented in v0.2.0**
+- ~~`logger.bind()` for persistent context fields~~ — **Implemented in v0.1.0**
 
 ### v0.3.0+ — Advanced
 

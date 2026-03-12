@@ -21,17 +21,22 @@ Azure Functions Python handlers share the same logging pain points:
 
 - Azure Functions Python **v2 programming model**
 - Python's standard `logging` module
-- Colorized log output for local development
-- Clean log formatting for readability
+- Colorized and JSON log output
+- Invocation context injection and cold start detection
 
 This package does **not** target distributed tracing, log aggregation, or OpenTelemetry integration.
 
 ## Features
 
 - Colorized log levels (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
+- JSON structured log output for production and CI environments
 - Clean `[TIME] [LEVEL] [LOGGER] message` format
 - `setup_logging()` one-liner configuration
 - `get_logger(__name__)` helper for convenient logger creation
+- Automatic invocation context injection (invocation_id, function_name, trace_id)
+- Cold start detection without manual instrumentation
+- Context binding via `logger.bind(user_id="abc")`
+- `host.json` log level conflict warning
 - Exception-friendly output with readable stack traces
 - Compatible with Python's standard `logging` module
 
@@ -50,6 +55,33 @@ setup_logging()
 
 logger = get_logger(__name__)
 logger.info("Processing request")
+```
+
+### JSON Output
+
+```python
+setup_logging(format="json")
+
+logger = get_logger(__name__)
+logger.info("Processing request")
+# {"timestamp": "...", "level": "INFO", "logger": "...", "message": "Processing request", ...}
+```
+
+### Context Injection
+
+```python
+from azure_functions_logging import inject_context
+
+def my_function(req, context):
+    inject_context(context)
+    logger.info("Handling request")  # includes invocation_id, function_name, trace_id
+```
+
+### Context Binding
+
+```python
+bound = logger.bind(user_id="abc", operation="checkout")
+bound.info("Processing")  # includes user_id + operation in every log line
 ```
 
 ## Development

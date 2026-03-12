@@ -70,25 +70,27 @@ The architecture uses Python's `contextvars` as the primary context propagation 
 
 ```
 src/azure_functions_logging/
-├── __init__.py       # Public API: setup_logging, get_logger, inject_context
-├── _context.py       # contextvars, ContextFilter, inject_context, cold_start
-├── _formatter.py     # ColorFormatter (local dev), context-aware formatting
-├── _logger.py        # FunctionLogger wrapper with bind() convenience
-└── _setup.py         # setup_logging(), environment detection
+├── __init__.py          # Public API: setup_logging, get_logger, inject_context, JsonFormatter
+├── _context.py          # contextvars, ContextFilter, inject_context, cold_start
+├── _formatter.py        # ColorFormatter (local dev), context-aware formatting
+├── _host_config.py      # host.json log level conflict detection (v0.2.0)
+├── _json_formatter.py   # JsonFormatter for structured NDJSON output (v0.2.0)
+├── _logger.py           # FunctionLogger wrapper with bind() convenience
+└── _setup.py            # setup_logging(), environment detection
 ```
 
 All internal modules use underscore prefix (`_module.py`) to signal private implementation.
 
-## Public API (v0.1.0)
+## Public API
 
-Three exports, matching the minimal philosophy of `azure-functions-validation`:
+Four exports plus a logger class:
 
 | Export | Type | Purpose |
 | --- | --- | --- |
 | `setup_logging()` | Function | Configure logging for the current environment |
 | `get_logger(name)` | Function | Create a `FunctionLogger` instance |
 | `inject_context(context)` | Function | Set invocation context from `func.Context` |
-
+| `JsonFormatter` | Class | Structured JSON log formatter (v0.2.0) |
 ### FunctionLogger Methods
 
 | Method | Purpose |

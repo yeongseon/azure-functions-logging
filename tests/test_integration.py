@@ -9,14 +9,20 @@ from unittest.mock import patch
 import pytest
 
 import azure_functions_logging as afl
-from azure_functions_logging import FunctionLogger, get_logger, inject_context, setup_logging
+from azure_functions_logging import (
+    FunctionLogger,
+    JsonFormatter,
+    get_logger,
+    inject_context,
+    setup_logging,
+)
 import azure_functions_logging._context as ctx_mod
 from azure_functions_logging._context import (
     cold_start_var,
     function_name_var,
     invocation_id_var,
     trace_id_var,
-    )
+)
 import azure_functions_logging._setup as setup_mod
 
 
@@ -73,8 +79,16 @@ def test_get_logger_returns_function_logger() -> None:
 
 
 def test_public_api_exports() -> None:
-    expected = {"__version__", "FunctionLogger", "get_logger", "inject_context", "setup_logging"}
+    expected = {
+        "__version__",
+        "FunctionLogger",
+        "JsonFormatter",
+        "get_logger",
+        "inject_context",
+        "setup_logging",
+    }
     assert set(afl.__all__) == expected
     assert callable(afl.get_logger)
     assert callable(afl.inject_context)
     assert callable(afl.setup_logging)
+    assert JsonFormatter is afl.JsonFormatter

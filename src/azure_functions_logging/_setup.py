@@ -7,6 +7,8 @@ import os
 
 from ._context import ContextFilter
 from ._formatter import ColorFormatter
+from ._host_config import warn_host_json_level_conflict
+from ._json_formatter import JsonFormatter
 
 # Track whether setup has been called to ensure idempotency
 _setup_done: bool = False
@@ -25,6 +27,7 @@ def _is_azure_hosted() -> bool:
 def setup_logging(
     *,
     level: int = logging.INFO,
+    format: str = "color",
     logger_name: str | None = None,
 ) -> None:
     """Configure logging for the current environment.
@@ -35,25 +38,32 @@ def setup_logging(
       handlers only. Does NOT add handlers or modify the root logger level
       (respects ``host.json`` configuration).
     - **Standalone local development**: Adds a ``StreamHandler`` with
-      ``ColorFormatter`` to the specified logger (or root logger if
-      ``logger_name`` is None). Sets the level.
+      ``ColorFormatter`` or ``JsonFormatter`` to the specified logger
+      (or root logger if ``logger_name`` is None). Sets the level.
 
     This function is idempotent — calling it multiple times has no additional
     effect.
 
     Args:
         level: Logging level for local development. Ignored in Azure/Core Tools.
+        format: Log output format for local development. Supported values are
+            ``"color"`` (default) and ``"json"``.
         logger_name: Optional logger name to configure. When None, configures
             the root logger (local dev) or installs filter on root handlers (Azure).
     """
     global _setup_done
+    if format not in {"color", "json"}:
+        msg = "format must be 'color' or 'json'"
+        raise ValueError(msg)
+
     if _setup_done:
         return
     _setup_done = True
 
     context_filter = ContextFilter()
+    is_functions_env = _is_functions_environment()
 
-    if _is_functions_environment():
+    if is_functions_env:
         # Azure or Core Tools: install filter only, don't touch handlers/level
         root = logging.getLogger()
         for handler in root.handlers:
@@ -68,10 +78,13 @@ def setup_logging(
         # Add colored handler only if no handlers exist
         if not target.handlers:
             handler = logging.StreamHandler()
-            handler.setFormatter(ColorFormatter())
+            handler.setFormatter(ColorFormatter() if format == "color" else JsonFormatter())
             handler.addFilter(context_filter)
             target.addHandler(handler)
         else:
             # Add filter to existing handlers
             for handler in target.handlers:
                 handler.addFilter(context_filter)
+
+    if is_functions_env:
+        warn_host_json_level_conflict(level)
