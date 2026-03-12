@@ -6,9 +6,9 @@ from unittest.mock import patch
 
 import pytest
 
-import azure_functions_logging._setup as setup_mod
 from azure_functions_logging._context import ContextFilter
 from azure_functions_logging._formatter import ColorFormatter
+import azure_functions_logging._setup as setup_mod
 from azure_functions_logging._setup import (
     _is_azure_hosted,
     _is_functions_environment,

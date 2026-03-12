@@ -9,15 +9,15 @@ from unittest.mock import patch
 import pytest
 
 import azure_functions_logging as afl
-import azure_functions_logging._context as ctx_mod
-import azure_functions_logging._setup as setup_mod
 from azure_functions_logging import FunctionLogger, get_logger, inject_context, setup_logging
+import azure_functions_logging._context as ctx_mod
 from azure_functions_logging._context import (
     cold_start_var,
     function_name_var,
     invocation_id_var,
     trace_id_var,
-)
+    )
+import azure_functions_logging._setup as setup_mod
 
 
 @pytest.fixture(autouse=True)
