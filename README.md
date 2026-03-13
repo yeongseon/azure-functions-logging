@@ -1,4 +1,4 @@
-# azure-functions-logging
+# Azure Functions Logging
 
 [![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
@@ -53,6 +53,14 @@ This package does **not** target distributed tracing, log aggregation, or OpenTe
 pip install azure-functions-logging
 ```
 
+For local development:
+
+```bash
+git clone https://github.com/yeongseon/azure-functions-logging.git
+cd azure-functions-logging
+pip install -e .[dev]
+```
+
 ## Quick Start
 
 ```python
@@ -91,17 +99,18 @@ bound = logger.bind(user_id="abc", operation="checkout")
 bound.info("Processing")  # includes user_id + operation in every log line
 ```
 
-## Development
-
-```bash
-git clone https://github.com/yeongseon/azure-functions-logging.git
-cd azure-functions-logging
-pip install -e .[dev]
-```
-
 ## Documentation
 
+- Full docs: [yeongseon.github.io/azure-functions-logging](https://yeongseon.github.io/azure-functions-logging/)
 - Product requirements: `PRD.md`
+
+## Ecosystem
+
+- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — Request and response validation
+- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI and Swagger UI
+- [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) — Diagnostic CLI
+- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding
+- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — Recipes and examples
 
 ## Disclaimer
 
