@@ -95,7 +95,6 @@ Development dependencies (not installed at runtime):
 | ------- | ------- |
 | pytest | Test runner |
 | mypy | Type checking |
-| ruff | Linting |
 | ruff | Code formatting + linting |
 | bandit | Security scanning |
 

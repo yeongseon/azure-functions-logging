@@ -198,7 +198,7 @@ Sets the following context fields for all subsequent logs in the current executi
 | ----- | ------ | ---- |
 | `invocation_id` | `context.invocation_id` | `str \| None` |
 | `function_name` | `context.function_name` | `str \| None` |
-| `trace_id` | `context.trace_context.trace_id` | `str \| None` |
+| `trace_id` | `context.trace_context.trace_parent` (W3C traceparent) | `str \| None` |
 | `cold_start` | Automatic detection | `bool` |
 
 ### Cold Start Detection
@@ -301,7 +301,7 @@ HH:MM:SS LEVEL logger message [context_fields]
 
 ### TTY Detection
 
-`ColorFormatter` automatically detects whether the output stream is a terminal (TTY). If the output is redirected or piped, ANSI color codes are omitted and plain text is output instead.
+`ColorFormatter` includes a static `is_tty()` method that checks whether the output stream is a terminal (TTY). Note that this method is available for external use but is **not called automatically** by the formatter itself --- colors are always emitted regardless of TTY status. If you need conditional color output, check `ColorFormatter.is_tty()` in your own code before selecting the formatter.
 
 ### Usage
 

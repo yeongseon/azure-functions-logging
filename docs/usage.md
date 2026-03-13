@@ -38,7 +38,7 @@ Each log level has a distinct color:
 | ERROR | Red | Errors that caused a specific operation to fail |
 | CRITICAL | Bold Red | Fatal errors that prevent the application from continuing |
 
-Colors are automatically disabled when output is redirected to a file or piped to another command.
+The `ColorFormatter` includes an `is_tty()` static method for checking terminal capability, but colors are always emitted by the formatter. For non-TTY environments, use JSON formatting instead.
 
 ## JSON Formatting (Production)
 
@@ -82,7 +82,7 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
 | ----- | ------ | ----------- |
 | `invocation_id` | `context.invocation_id` | Unique ID for this function invocation |
 | `function_name` | `context.function_name` | Name of the Azure Function |
-| `trace_id` | `context.trace_context.trace_id` | Distributed tracing identifier |
+| `trace_id` | `context.trace_context.trace_parent` (W3C traceparent) | Distributed tracing identifier |
 | `cold_start` | Automatic | Whether this is the first invocation after process startup |
 
 ### Context Scope
@@ -225,7 +225,8 @@ Azure Functions uses `host.json` to configure logging at the host level. These s
 The library reads `host.json` on startup and warns if it detects a conflict:
 
 ```
-WARNING: host.json logLevel 'Warning' may suppress logs at level 'INFO'
+host.json logLevel.default is set to 'Warning' which is more restrictive than the
+configured level 'INFO'. Logs below 'Warning' will be suppressed by the Azure Functions host.
 ```
 
 ### Common Conflicts

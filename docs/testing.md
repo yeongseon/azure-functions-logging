@@ -56,12 +56,16 @@ All tests reside in the `tests/` directory:
 
 ```
 tests/
-+-- test_logging.py      # Logging setup and configuration tests
-+-- test_formatter.py     # ColorFormatter and JsonFormatter tests
-+-- test_context.py       # Context injection, binding, and ContextFilter tests
+-- test_context.py          # Context injection, binding, and ContextFilter tests
+-- test_formatter.py        # ColorFormatter tests
+-- test_host_config.py      # host.json conflict detection tests
+-- test_integration.py      # End-to-end integration tests
+-- test_json_formatter.py   # JsonFormatter tests
+-- test_logger.py           # FunctionLogger wrapper tests
+-- test_setup.py            # Logging setup and configuration tests
 ```
 
-### test_logging.py
+### test_setup.py
 
 Tests for the `setup_logging()` function and overall logging system configuration:
 
@@ -69,23 +73,21 @@ Tests for the `setup_logging()` function and overall logging system configuratio
 - `format="json"` creates a handler with `JsonFormatter`
 - Idempotent setup (multiple calls do not add duplicate handlers)
 - Custom log level configuration
-- Logger name targeting
-- Environment detection (Azure vs. local)
-- Host.json conflict detection and warning
+- Invalid format raises `ValueError`
 
 ### test_formatter.py
 
-Tests for both `ColorFormatter` and `JsonFormatter`:
-
-**ColorFormatter tests**:
+Tests for `ColorFormatter`:
 
 - Format string structure: `HH:MM:SS LEVEL logger message`
 - Color codes per level (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
-- TTY detection (colors disabled when output is not a terminal)
+- Context fields appended when present
 - Exception formatting with readable stack traces
-- Extra fields included in output
+- Cold start indicator in output
 
-**JsonFormatter tests**:
+### test_json_formatter.py
+
+Tests for `JsonFormatter`:
 
 - Output is valid JSON (single line per record)
 - All required fields present: timestamp, level, logger, message
@@ -101,23 +103,46 @@ Tests for context injection, binding, and the ContextFilter:
 **inject_context tests**:
 
 - Extracts invocation_id, function_name, trace_id from context object
+- Trace ID extracted from W3C traceparent header (second field of `trace_parent`)
 - Cold start detection (first call returns True, subsequent calls return False)
 - Handles missing attributes gracefully (defaults to None)
 - Handles None context without raising
 - Thread safety via contextvars
-
-**FunctionLogger.bind tests**:
-
-- Bound context is included in log output
-- Binding is immutable (original logger is not modified)
-- Cumulative binding (bind on a bound logger combines both contexts)
-- clear_context removes all bound fields
 
 **ContextFilter tests**:
 
 - Filter attaches context fields to LogRecord
 - Filter works with no context set (fields default to None)
 - Filter does not raise on any input
+
+### test_logger.py
+
+Tests for the `FunctionLogger` wrapper class:
+
+- All standard log methods delegate to the wrapped logger (debug, info, warning, error, critical, exception)
+- `bind()` returns a new `FunctionLogger` with merged context
+- Binding is immutable (original logger is not modified)
+- Cumulative binding (bind on a bound logger combines both contexts)
+- `clear_context()` removes all bound fields
+- `setLevel()`, `isEnabledFor()`, `getEffectiveLevel()` delegate correctly
+- `name` property returns the underlying logger name
+
+### test_host_config.py
+
+Tests for `host.json` conflict detection:
+
+- Warns when host.json logLevel is more restrictive than configured level
+- No warning when host.json logLevel matches or is less restrictive
+- No warning when host.json is missing
+- Handles malformed host.json gracefully
+
+### test_integration.py
+
+End-to-end integration tests:
+
+- Full logging pipeline with ColorFormatter produces expected output
+- Full logging pipeline with JsonFormatter produces valid JSON with all fields
+- Context injection and log output work together correctly
 
 ## Writing Tests
 
@@ -171,7 +196,7 @@ class MockContext:
     function_name = "TestFunction"
 
     class trace_context:
-        trace_id = "test-trace-id"
+        trace_parent = "00-abcdef1234567890abcdef1234567890-1234567890abcdef-01"
 
 def test_inject_context_sets_fields():
     inject_context(MockContext())

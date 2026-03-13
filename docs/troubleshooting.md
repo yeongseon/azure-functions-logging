@@ -6,7 +6,7 @@ Common issues and solutions for `azure-functions-logging`.
 
 **Symptom**: Log output appears as plain text without colors.
 
-**Cause**: The `ColorFormatter` automatically detects terminal capability. Colors are disabled when `stdout` or `stderr` is not a TTY (terminal).
+**Cause**: The `ColorFormatter` always emits ANSI color codes. While it provides an `is_tty()` static method, the formatter does not call it internally to disable colors.
 
 **Common scenarios where colors are disabled**:
 
@@ -44,7 +44,8 @@ Example `host.json` that suppresses INFO logs:
 The library detects this conflict and emits a warning. Check your terminal output for messages like:
 
 ```
-WARNING: host.json logLevel 'Warning' may suppress logs at level 'INFO'
+host.json logLevel.default is set to 'Warning' which is more restrictive than the
+configured level 'INFO'. Logs below 'Warning' will be suppressed by the Azure Functions host.
 ```
 
 **Solution**: Adjust your `host.json` to match your desired log level, or set a specific override for your function:
@@ -94,7 +95,7 @@ The `context` object must have these attributes:
 
 - `invocation_id` (str)
 - `function_name` (str)
-- `trace_context.trace_id` (str)
+- `trace_context.trace_parent` (str, W3C traceparent format)
 
 If any attribute is missing, that field defaults to `None` without raising an error.
 

@@ -30,7 +30,7 @@ src/azure_functions_logging/
 
 **`_json_formatter.py`** -- Implements `JsonFormatter`, a `logging.Formatter` subclass that outputs NDJSON (Newline Delimited JSON). Each log record becomes a single-line JSON object with timestamp, level, logger name, message, context fields, exception info, and any extra fields.
 
-**`_formatter.py`** -- Implements `ColorFormatter`, a `logging.Formatter` subclass that produces colorized terminal output. Maps log levels to ANSI color codes (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red). Automatically detects terminal capability and disables colors when output is redirected.
+**`_formatter.py`** -- Implements `ColorFormatter`, a `logging.Formatter` subclass that produces colorized terminal output. Maps log levels to ANSI color codes (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red). Provides an `is_tty()` static method for external TTY detection, though colors are always emitted by the formatter itself.
 
 **`_host_config.py`** -- Reads the `host.json` file (if present) to detect logging level conflicts. Azure Functions' `host.json` can override application-level log settings, silently suppressing log output. This module warns developers when it detects a mismatch.
 
@@ -130,8 +130,8 @@ This approach works because Azure Functions reuses the same Python process for m
 
 The library follows a "never crash the application" approach:
 
-- `inject_context()` catches `AttributeError` when accessing context fields and defaults to `None`
-- `setup_logging()` catches configuration errors and falls back to basic logging
+- `inject_context()` catches all exceptions when accessing context fields and defaults to `None`
+- `setup_logging()` validates the format parameter and raises `ValueError` for unsupported values
 - `ContextFilter` never raises during filtering; missing context fields default to `None`
 - `host.json` reading catches file I/O errors and JSON parse errors silently
 

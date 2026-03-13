@@ -49,9 +49,13 @@ azure-functions-logging/
 |   +-- _host_config.py            # host.json conflict detection
 |   +-- py.typed                   # PEP 561 type checking marker
 +-- tests/                         # Test suite (pytest)
-|   +-- test_logging.py            # Logging setup tests
-|   +-- test_formatter.py          # Formatter tests
-|   +-- test_context.py            # Context injection tests
+|   +-- test_context.py          # Context injection tests
+|   +-- test_formatter.py        # ColorFormatter tests
+|   +-- test_host_config.py      # host.json conflict detection tests
+|   +-- test_integration.py      # End-to-end integration tests
+|   +-- test_json_formatter.py   # JsonFormatter tests
+|   +-- test_logger.py           # FunctionLogger wrapper tests
+|   +-- test_setup.py            # Logging setup tests
 +-- docs/                          # Documentation (MkDocs)
 +-- pyproject.toml                 # Build configuration (hatch)
 +-- Makefile                       # Development task automation
