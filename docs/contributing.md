@@ -54,7 +54,7 @@ This runs:
 
 | Check | Command |
 | ----- | ------- |
-| Code formatting | `make format` (ruff + black) |
+| Code formatting | `make format` (ruff) |
 | Linting | `make style` (ruff) |
 | Type checking | `make typecheck` (mypy) |
 | Security scan | `make security` (bandit) |
@@ -110,9 +110,9 @@ chore: bump mypy to v1.12
 
 ### Code Style
 
-- Code is formatted with `black` and linted with `ruff`
+- Code is formatted with `ruff` and linted with `ruff`
 - Run `make format` to auto-format before committing
-- Maximum line length: 88 characters (black default)
+- Maximum line length: 100 characters (ruff configured)
 
 ### Error Handling
 
@@ -138,7 +138,7 @@ chore: bump mypy to v1.12
 
 | Command | Description |
 | ------- | ----------- |
-| `make format` | Format code with ruff and black |
+| `make format` | Format code with ruff |
 | `make style` | Lint with ruff |
 | `make typecheck` | Type check with mypy (strict mode) |
 | `make lint` | Run both style and typecheck |

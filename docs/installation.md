@@ -50,7 +50,7 @@ cd azure-functions-logging
 pip install -e ".[dev]"
 ```
 
-This installs the package in editable mode along with development tools (pytest, mypy, ruff, black, bandit).
+This installs the package in editable mode along with development tools (pytest, mypy, ruff, bandit).
 
 ## Prerequisites
 

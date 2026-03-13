@@ -64,7 +64,7 @@ All development tasks are automated via `Makefile` targets:
 
 | Command | Description | Tools Used |
 | ------- | ----------- | ---------- |
-| `make format` | Auto-format code | ruff, black |
+| `make format` | Auto-format code | ruff |
 | `make style` | Lint for code quality issues | ruff |
 | `make typecheck` | Static type checking | mypy (strict) |
 | `make lint` | Run both `style` and `typecheck` | ruff, mypy |
@@ -183,7 +183,7 @@ Key rules:
 
 ## Code Formatting
 
-Code is auto-formatted with black and ruff:
+Code is auto-formatted with ruff:
 
 ```bash
 make format

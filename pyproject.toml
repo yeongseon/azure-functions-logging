@@ -9,15 +9,17 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+    "bandit==1.9.4",
+    "bandit[toml]",
     "build",
+    "coverage",
+    "git-cliff",
     "hatch",
+    "mypy==1.19.1",
+    "pre-commit",
     "pytest",
     "pytest-cov",
     "ruff==0.15.5",
-    "black==26.3.0",
-    "mypy==1.19.1",
-    "bandit==1.9.4",
-    "bandit[toml]",
 ]
 docs = [
     "mkdocs<2.0",
@@ -35,17 +37,28 @@ sources = ["src"]
 [tool.hatch.version]
 path = "src/azure_functions_logging/__init__.py"
 
+[tool.hatch.publish.index]
+default = "pypi"
+
+[tool.hatch.publish.index.repos.pypi]
+url = "https://upload.pypi.org/legacy/"
+
+[tool.hatch.publish.index.repos.test]
+url = "https://test.pypi.org/legacy/"
 [tool.hatch.envs.default]
 python = "3.10"
 features = ["dev", "docs"]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest -v tests"
-cov = "pytest --cov-report=term-missing --cov-report=html --cov-report=xml tests/"
+format = "ruff format src tests"
 style = "ruff check src tests"
-format = "ruff format src tests && black src tests"
 typecheck = "mypy src tests"
 lint = "hatch run style && hatch run typecheck"
+test = "pytest -v tests"
+cov = "pytest --cov-report=term-missing --cov-report=html --cov-report=xml tests/"
+docs = "mkdocs serve"
+precommit = "pre-commit run --all-files"
+precommit-install = "pre-commit install"
 security = "python -m bandit -r src"
 
 [tool.pytest.ini_options]
@@ -65,10 +78,6 @@ fixable = ["ALL"]
 known-first-party = ["azure_functions_logging"]
 force-sort-within-sections = true
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
-
-[tool.black]
-line-length = 100
-target-version = ["py310", "py311", "py312", "py313", "py314"]
 
 [tool.mypy]
 python_version = "3.10"

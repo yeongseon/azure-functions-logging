@@ -59,11 +59,7 @@ class JsonFormatter(logging.Formatter):
             exception = self.formatException(record.exc_info)
 
         excluded_fields = _STANDARD_RECORD_FIELDS | _CONTEXT_FIELDS
-        extra = {
-            key: value
-            for key, value in record.__dict__.items()
-            if key not in excluded_fields
-        }
+        extra = {key: value for key, value in record.__dict__.items() if key not in excluded_fields}
 
         payload = {
             "timestamp": timestamp,
