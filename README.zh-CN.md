@@ -1,4 +1,4 @@
-# azure-functions-logging
+# Azure Functions Logging
 
 [![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
@@ -53,6 +53,14 @@ Azure Functions Python 处理程序通常面临以下 logging 痛点：
 pip install azure-functions-logging
 ```
 
+本地开发用:
+
+```bash
+git clone https://github.com/yeongseon/azure-functions-logging.git
+cd azure-functions-logging
+pip install -e .[dev]
+```
+
 ## Quick Start
 
 ```python
@@ -91,17 +99,18 @@ bound = logger.bind(user_id="abc", operation="checkout")
 bound.info("Processing")  # includes user_id + operation in every log line
 ```
 
-## Development
-
-```bash
-git clone https://github.com/yeongseon/azure-functions-logging.git
-cd azure-functions-logging
-pip install -e .[dev]
-```
-
 ## Documentation
 
+- 完整文档: [yeongseon.github.io/azure-functions-logging](https://yeongseon.github.io/azure-functions-logging/)
 - 产品需求文档: `PRD.md`
+
+## Ecosystem
+
+- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — 请求与响应校验
+- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI 与 Swagger UI
+- [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) — 诊断 CLI
+- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — 项目脚手架
+- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — 食谱与示例
 
 ## Disclaimer
 
