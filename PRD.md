@@ -266,3 +266,60 @@ inject_context(func_context)
 - `azure-functions-doctor` — Project diagnostics
 
 The focus is simplicity, readability, and Azure Functions-specific safety.
+
+## 14. Example-First Design
+
+### Philosophy
+
+Small-ecosystem libraries live or die by the quality of their examples.
+If a developer cannot go from `pip install` to readable log output in under five minutes,
+the library has already lost. `azure-functions-logging` treats inline code examples
+as a first-class deliverable — every feature section above includes a runnable snippet.
+
+### Quick Start (Hello World)
+
+The shortest path from zero to colorized, context-aware logging:
+
+```python
+from azure_functions_logging import get_logger, setup_logging
+
+setup_logging()
+
+logger = get_logger(__name__)
+logger.info("Processing request")
+```
+
+With invocation context in an Azure Function:
+
+```python
+import azure.functions as func
+
+from azure_functions_logging import get_logger, inject_context, setup_logging
+
+setup_logging()
+logger = get_logger(__name__)
+
+
+def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    inject_context(context)
+    logger.info("Handling request")  # includes invocation_id, function_name, trace_id
+    return func.HttpResponse("OK")
+```
+
+### Why Examples Matter
+
+1. **Lower entry barrier.** A working Hello World in the PRD and README lets developers
+   evaluate the library before reading any reference documentation.
+2. **AI agent discoverability.** Tools like GitHub Copilot, Cursor, and Claude Code recommend
+   libraries based on README, PRD, and example content. Inline code snippets increase the
+   chance that AI agents surface `azure-functions-logging` for relevant prompts.
+3. **Cookbook role.** For niche ecosystems, inline examples and `docs/` often serve as the
+   primary learning material. Every new feature should include a runnable code snippet.
+4. **Proven approach.** FastAPI, LangChain, SQLAlchemy, and Pandas all achieved early adoption
+   through extensive, copy-paste-friendly examples.
+
+### Examples in This Document
+
+This PRD embeds working code examples throughout the feature sections (7.1 through 7.8).
+Each snippet is designed to be copy-pasted into a real Azure Functions project. The inline
+approach is intentional — for a logging library, the code IS the documentation.
