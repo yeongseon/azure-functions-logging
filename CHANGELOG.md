@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.2.2] - 2026-03-14
+
+### Added
+
+- Unified tooling: Ruff (lint + format), pre-commit hooks, standardized Makefile
+- Comprehensive documentation overhaul (17 MkDocs pages)
+- 5 runnable example scripts with smoke tests
+- Translated README files (Korean, Japanese, Chinese)
+- Standardized nav structure and documentation quality across ecosystem
+- pyproject.toml metadata (classifiers, project URLs)
+- Project metadata in logging output
 
 ## [0.2.1] - 2026-03-12
 

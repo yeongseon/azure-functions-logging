@@ -3,7 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.2] - 2026-03-14
+
+### Added
+
+- Unified tooling: Ruff (lint + format), pre-commit hooks, standardized Makefile
+- Comprehensive documentation overhaul (17 MkDocs pages)
+- 5 runnable example scripts with smoke tests
+- Translated README files (Korean, Japanese, Chinese)
+- Standardized nav structure and documentation quality across ecosystem
+- pyproject.toml metadata (classifiers, project URLs)
+- Project metadata in logging output
 
 ## [0.2.1] - 2026-03-12
 
