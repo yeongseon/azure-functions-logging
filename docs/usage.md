@@ -1,245 +1,215 @@
 # Usage Guide
 
-This guide covers all features of `azure-functions-logging` with detailed examples.
+This guide covers practical, production-oriented usage of `azure-functions-logging` across local development and Azure Functions runtime deployment.
 
-## Basic Setup
+## Quick Baseline
 
-To get started, call `setup_logging()` once and use `get_logger()` to create loggers:
+Start every project with this structure:
 
 ```python
-from azure_functions_logging import setup_logging, get_logger
+from azure_functions_logging import get_logger, setup_logging
 
-# Initialize logging at the start of your application
 setup_logging()
+logger = get_logger(__name__)
+```
 
-# Get a logger instance for your module
+From here, add JSON output, context injection, and binding based on your environment and observability needs.
+
+## 1) Basic Setup
+
+### Local Development Defaults
+
+```python
+from azure_functions_logging import get_logger, setup_logging
+
+setup_logging()
 logger = get_logger(__name__)
 
-logger.info("Hello, world!")
+logger.info("application started")
 ```
 
-`setup_logging()` is typically called at module level or in an application startup hook. It only needs to be called once -- subsequent calls are no-ops.
+Default behavior:
 
-## Colorized Output (Local Development)
+- Level is `INFO`.
+- Format is `color`.
+- Setup is idempotent.
 
-By default, `setup_logging()` uses a color-aware formatter designed for local terminal output:
-
-```
-14:30:05 INFO my_module Hello, world!
-```
-
-Each log level has a distinct color:
-
-| Level | Color | Use Case |
-| ----- | ----- | -------- |
-| DEBUG | Gray | Detailed diagnostic information |
-| INFO | Blue | General operational information |
-| WARNING | Yellow | Unexpected events that do not prevent operation |
-| ERROR | Red | Errors that caused a specific operation to fail |
-| CRITICAL | Bold Red | Fatal errors that prevent the application from continuing |
-
-The `ColorFormatter` includes an `is_tty()` static method for checking terminal capability, but colors are always emitted by the formatter. For non-TTY environments, use JSON formatting instead.
-
-## JSON Formatting (Production)
-
-For production environments where logs are consumed by aggregation systems (Azure Log Analytics, Datadog, Splunk), switch to JSON formatting:
-
-```python
-setup_logging(format="json")
-```
-
-Each log line is a single JSON object (NDJSON format):
-
-```json
-{"timestamp": "2026-03-12T10:00:00.000000Z", "level": "INFO", "logger": "my_module", "message": "Processing request", "invocation_id": "abc-123", "function_name": "HttpTrigger", "trace_id": "def-456", "cold_start": false}
-```
-
-JSON output includes all context fields and any extra fields passed to the logger.
-
-## Context Injection
-
-In Azure Functions handlers, inject the execution context to include function-specific metadata in every log line:
-
-```python
-import azure.functions as func
-from azure_functions_logging import inject_context, get_logger
-
-logger = get_logger(__name__)
-
-def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
-    # Inject context at the start of every handler
-    inject_context(context)
-
-    logger.info("Handling HTTP request")
-    # Output includes: invocation_id, function_name, trace_id, cold_start
-
-    return func.HttpResponse("OK")
-```
-
-### What Gets Injected
-
-| Field | Source | Description |
-| ----- | ------ | ----------- |
-| `invocation_id` | `context.invocation_id` | Unique ID for this function invocation |
-| `function_name` | `context.function_name` | Name of the Azure Function |
-| `trace_id` | `context.trace_context.trace_parent` (W3C traceparent) | Distributed tracing identifier |
-| `cold_start` | Automatic | Whether this is the first invocation after process startup |
-
-### Context Scope
-
-Context is stored using Python's `contextvars` module, making it:
-
-- Thread-safe (each thread has its own context)
-- Async-safe (each async task has its own context)
-- Scoped to the current execution context
-
-You only need to call `inject_context()` once per invocation. All loggers in the same execution context will include the injected fields.
-
-## Context Binding
-
-Bind additional key-value pairs to a logger instance for persistent context across multiple log calls:
-
-```python
-logger = get_logger(__name__)
-
-# Create a request-scoped logger with bound context
-request_logger = logger.bind(user_id="abc-123", operation="checkout")
-
-request_logger.info("Starting checkout")
-# Output includes: user_id=abc-123, operation=checkout
-
-request_logger.info("Validating payment")
-# Output includes: user_id=abc-123, operation=checkout
-
-request_logger.info("Checkout complete")
-# Output includes: user_id=abc-123, operation=checkout
-```
-
-### Immutable Binding
-
-`bind()` returns a **new** logger instance. The original logger is not modified:
-
-```python
-logger = get_logger(__name__)
-bound = logger.bind(user_id="abc")
-
-bound.info("message")   # includes user_id=abc
-logger.info("message")  # does NOT include user_id
-```
-
-### Cumulative Binding
-
-Binding is cumulative -- calling `bind()` on an already-bound logger adds to the existing context:
-
-```python
-l1 = logger.bind(user_id="abc")
-l2 = l1.bind(session_id="xyz")
-
-l2.info("message")
-# Output includes both user_id=abc and session_id=xyz
-```
-
-### Clearing Context
-
-Remove all bound context from a logger:
-
-```python
-bound = logger.bind(user_id="abc")
-bound.clear_context()
-bound.info("message")
-# Output no longer includes user_id
-```
-
-## Logger Methods
-
-The `FunctionLogger` returned by `get_logger()` supports all standard logging levels:
-
-```python
-logger.debug("Detailed diagnostic information")
-logger.info("General operational information")
-logger.warning("Something unexpected happened, but process continues")
-logger.error("Something went wrong, process might have failed")
-logger.critical("Fatal error, process cannot continue")
-```
-
-### Exception Logging
-
-Use `logger.exception()` inside an exception handler to include the stack trace:
-
-```python
-try:
-    result = 1 / 0
-except ZeroDivisionError:
-    logger.exception("Caught an exception")
-    # Output includes the full stack trace automatically
-```
-
-### Extra Fields
-
-Pass additional key-value pairs as keyword arguments:
-
-```python
-logger.info("User action", action="login", ip="192.168.1.1", duration_ms=42)
-```
-
-In JSON format, these appear in the `extra` object. In color format, they appear as `[key=value]` pairs at the end of the line.
-
-## Setting Log Level
-
-Control which messages are output by setting the log level:
+### Explicit Level Configuration
 
 ```python
 import logging
+from azure_functions_logging import get_logger, setup_logging
 
-# Show all messages including DEBUG
 setup_logging(level=logging.DEBUG)
+logger = get_logger("demo")
 
-# Show only WARNING and above
-setup_logging(level=logging.WARNING)
+logger.debug("debug event")
+logger.info("info event")
 ```
 
-The default level is `logging.INFO`.
-
-You can also change the level on individual loggers:
+### Explicit Logger Targeting
 
 ```python
+from azure_functions_logging import get_logger, setup_logging
+
+setup_logging(logger_name="payments")
+logger = get_logger("payments.http")
+logger.info("named logger configured")
+```
+
+!!! tip
+    If your application is small to medium-sized, root logger setup with `logger_name=None` is the simplest and safest default.
+
+## 2) JSON Output for Production
+
+Use JSON when logs are consumed by systems, not just humans.
+
+```python
+import logging
+from azure_functions_logging import get_logger, setup_logging
+
+setup_logging(level=logging.INFO, format="json")
+logger = get_logger("orders")
+
+logger.info("service started", service="orders", region="eastus")
+```
+
+Typical JSON event shape:
+
+```json
+{"timestamp":"...","level":"INFO","logger":"orders","message":"service started","invocation_id":null,"function_name":null,"trace_id":null,"cold_start":null,"exception":null,"extra":{"service":"orders","region":"eastus"}}
+```
+
+JSON best practices:
+
+- Keep `message` short and stable.
+- Put event dimensions in structured keys.
+- Use stable key naming conventions (`tenant_id`, `request_id`, `operation`).
+
+## 3) Context Injection in Azure Functions
+
+Call `inject_context(context)` once per invocation.
+
+```python
+import azure.functions as func
+from azure_functions_logging import get_logger, inject_context, setup_logging
+
+setup_logging(format="json")
 logger = get_logger(__name__)
-logger.setLevel(logging.DEBUG)
+
+app = func.FunctionApp()
+
+
+@app.route(route="hello")
+def hello(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    inject_context(context)
+    logger.info("request started")
+    return func.HttpResponse("ok")
 ```
 
-## Cold Start Detection
+Fields populated from context:
 
-The library automatically detects cold starts -- the first function invocation after a new Python process is started. This is included as a `cold_start` boolean in log output when `inject_context()` is used.
+- `invocation_id`
+- `function_name`
+- `trace_id`
+- `cold_start`
 
-No manual instrumentation is required. The detection works by tracking whether `inject_context()` has been called before in the current process:
+Why it matters:
 
-- First call: `cold_start=True`
-- All subsequent calls: `cold_start=False`
+- Correlates all logs for one invocation.
+- Improves debugging and incident triage.
+- Requires no manual propagation across call chains.
 
-Restarting the Azure Functions host or the local development server resets the cold start flag.
+## 4) Context Binding with `FunctionLogger.bind()`
 
-## host.json Conflict Detection
+Use `bind()` for request-scoped keys that should appear on many events.
 
-Azure Functions uses `host.json` to configure logging at the host level. These settings can override your application-level log configuration, silently suppressing log output.
+```python
+from azure_functions_logging import get_logger
 
-The library reads `host.json` on startup and warns if it detects a conflict:
+logger = get_logger("checkout")
+request_logger = logger.bind(request_id="r-1", user_id="u-1")
 
+request_logger.info("validate cart")
+request_logger.info("authorize payment")
+request_logger.info("create order")
 ```
-host.json logLevel.default is set to 'Warning' which is more restrictive than the
-configured level 'INFO'. Logs below 'Warning' will be suppressed by the Azure Functions host.
+
+Binding behavior:
+
+- Immutable: original logger unchanged.
+- Merge-friendly: chaining adds keys.
+- Predictable: no hidden global mutable context.
+
+### Chaining Example
+
+```python
+base = get_logger("api")
+l1 = base.bind(tenant_id="tenant-a")
+l2 = l1.bind(operation="import")
+l2.info("import started")
 ```
 
-### Common Conflicts
+### Clearing Bound Context
 
-| host.json Setting | Application Level | Result |
-| ----------------- | ----------------- | ------ |
-| `"default": "Warning"` | `logging.INFO` | INFO logs suppressed |
-| `"default": "Error"` | `logging.WARNING` | WARNING logs suppressed |
-| `"default": "None"` | Any | All logs suppressed |
+```python
+bound = get_logger("demo").bind(session_id="s-123")
+bound.info("before clear")
+bound.clear_context()
+bound.info("after clear")
+```
 
-### Resolution
+!!! warning
+    Do not store request-scoped bound loggers as module-level singletons. Create them per invocation.
 
-Adjust `host.json` to match your desired log level:
+## 5) Cold Start Detection
+
+Cold start is automatic and exposed in logs through `cold_start`.
+
+Behavior:
+
+- First invocation after process startup: `cold_start=True`
+- Subsequent invocations in same process: `cold_start=False`
+
+No manual state tracking needed.
+
+### Example with Duration
+
+```python
+import time
+from azure_functions_logging import get_logger
+
+logger = get_logger("perf")
+
+start = time.perf_counter()
+# handler logic
+duration_ms = int((time.perf_counter() - start) * 1000)
+logger.info("request completed", duration_ms=duration_ms)
+```
+
+In JSON mode, this allows easy latency split by cold vs warm path.
+
+## 6) host.json Conflict Awareness
+
+In Azure/Core Tools contexts, host-level log policy can suppress app logs.
+
+If host defaults are stricter than your configured level, the package emits a warning to surface this mismatch.
+
+Potential conflict example:
+
+```json
+{
+  "logging": {
+    "logLevel": {
+      "default": "Warning"
+    }
+  }
+}
+```
+
+If app setup is `INFO`, lower-severity events can be hidden by host policy.
+
+Recommended baseline:
 
 ```json
 {
@@ -251,76 +221,121 @@ Adjust `host.json` to match your desired log level:
 }
 ```
 
-Or set a specific override for your function:
+## 7) Environment Behavior
 
-```json
-{
-  "logging": {
-    "logLevel": {
-      "default": "Warning",
-      "Function.MyFunction": "Information"
-    }
-  }
-}
-```
+`setup_logging()` chooses behavior by runtime detection.
 
-## Environment Detection
+### Local standalone execution
 
-The library automatically detects whether it is running in Azure or locally:
+- Sets logger level.
+- Adds stream handler if missing.
+- Installs context filter.
+- Applies selected formatter.
 
-- **Azure Environment**: Only adds a `ContextFilter` to existing handlers to avoid duplicate log output. The Azure Functions host already configures logging handlers.
-- **Local Environment**: Sets up a full handler with the selected formatter for readable developer output.
+### Azure Functions / Core Tools
 
-Detection is based on environment variables:
+- Does not add handlers.
+- Installs context filter for metadata enrichment.
+- Leaves host handler pipeline intact.
 
-- `FUNCTIONS_WORKER_RUNTIME` (set to `python` in Azure)
-- `WEBSITE_INSTANCE_ID` (set in Azure App Service environments)
+This design prevents duplicate logs in runtime-managed environments.
 
-## Complete Example
-
-A full Azure Functions HTTP trigger with all logging features:
+## 8) Complete End-to-End Pattern
 
 ```python
+import json
 import logging
 import azure.functions as func
-from azure_functions_logging import setup_logging, get_logger, inject_context
+from azure_functions_logging import get_logger, inject_context, setup_logging
 
-# Module-level setup (runs once on cold start)
-setup_logging(format="json", level=logging.INFO)
+setup_logging(level=logging.INFO, format="json")
 logger = get_logger(__name__)
 
 app = func.FunctionApp()
 
+
 @app.route(route="process")
-def process_request(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
-    # Inject Azure Functions context
+def process(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     inject_context(context)
 
-    # Create a request-scoped logger
-    request_logger = logger.bind(
-        method=req.method,
-        url=req.url,
-    )
-
-    request_logger.info("Request received")
+    request_logger = logger.bind(method=req.method, route="/process")
+    request_logger.info("request received")
 
     try:
-        body = req.get_json()
-        user_id = body.get("user_id")
+        payload = req.get_json()
+        user_id = payload.get("user_id")
 
-        # Further scope the logger
         user_logger = request_logger.bind(user_id=user_id)
-        user_logger.info("Processing user request")
+        user_logger.info("payload accepted")
 
-        # Business logic here...
         result = {"status": "ok"}
-
-        user_logger.info("Request completed", status="success")
+        user_logger.info("request completed", status="success")
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
-
     except Exception:
-        request_logger.exception("Request failed")
-        return func.HttpResponse("Internal error", status_code=500)
+        request_logger.exception("request failed")
+        return func.HttpResponse("internal error", status_code=500)
 ```
 
-Each log line includes: timestamp, level, logger name, message, invocation_id, function_name, trace_id, cold_start, method, url, user_id (when bound), and any extra fields.
+## 9) Advanced Patterns
+
+### A) Suppress Noisy Dependency Logs
+
+```python
+import logging
+from azure_functions_logging import setup_logging
+
+setup_logging(level=logging.INFO, format="json")
+
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+```
+
+### B) Feature Flags in Logs
+
+```python
+feature_logger = get_logger("features").bind(feature="recommendations", version="v2")
+feature_logger.info("feature evaluated", outcome="enabled")
+```
+
+### C) Operation Timing
+
+```python
+import time
+
+op_logger = get_logger("timing").bind(operation="sync")
+start = time.perf_counter()
+# ... work ...
+elapsed_ms = int((time.perf_counter() - start) * 1000)
+op_logger.info("operation finished", elapsed_ms=elapsed_ms)
+```
+
+## 10) Operational Checklist
+
+Before production rollout:
+
+- `setup_logging()` called once in startup path.
+- `format="json"` enabled where logs are machine-consumed.
+- `inject_context(context)` present in every handler.
+- Request-level metadata attached through `bind()`.
+- `host.json` defaults reviewed against required visibility.
+- Dependency logger noise controlled with explicit levels.
+
+## 11) Common Pitfalls
+
+- Multiple setup owners in the same process.
+- Missing context injection before first log event.
+- Expecting app-level level to override restrictive host policy.
+- Reusing one bound logger across unrelated invocations.
+- Emitting unstructured free-text fields that are hard to query.
+
+## 12) Where to Go Next
+
+- [Getting Started](getting-started.md)
+- [Configuration](configuration.md)
+- [Basic Setup Example](examples/basic_setup.md)
+- [JSON Output Example](examples/json_output.md)
+- [Context Injection Example](examples/context_injection.md)
+- [Context Binding Example](examples/context_binding.md)
+- [Cold Start Detection Example](examples/cold_start_detection.md)
+- [API Reference](api.md)
+- [Troubleshooting](troubleshooting.md)

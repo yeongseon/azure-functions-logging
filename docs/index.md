@@ -1,108 +1,128 @@
 # Azure Functions Logging
 
-Developer-friendly logging helpers for the Azure Functions Python v2 programming model.
+Production-oriented, developer-friendly logging for the Azure Functions Python v2 programming model.
 
-Azure Functions Logging provides a thin wrapper around Python's standard `logging` module to make logging in Azure Functions more developer-friendly. It handles context injection, cold start detection, and provides clean, colorized output for local development and structured JSON formatting for production environments.
+`azure-functions-logging` keeps setup small while giving you structured context, cold start visibility, and practical local ergonomics.
 
-## The Problem
+## Five-Second Start
 
-Azure Functions Python handlers share common logging pain points:
-
-- Log output is visually dense and hard to scan during local development
-- Errors do not stand out from info-level noise
-- Default formatting is not optimized for human readability
-- There is no built-in way to include invocation context (invocation ID, function name, trace ID) in log output
-- Cold start detection requires manual instrumentation
-- Switching between human-readable and machine-parseable formats requires boilerplate
-
-## The Solution
-
-`azure-functions-logging` provides a one-liner setup that handles all of these concerns:
+Copy this into your function module:
 
 ```python
-from azure_functions_logging import setup_logging, get_logger, inject_context
+from azure_functions_logging import get_logger, setup_logging
 
 setup_logging()
 logger = get_logger(__name__)
+
+logger.info("logging initialized")
 ```
 
-That is all the configuration needed. The library detects whether it is running locally or in Azure and adjusts its behavior accordingly.
+That setup is enough to begin.
 
-## Key Features
+## Why Teams Use It
 
-- **Colorized Output** -- Clean, readable logs with color-coded levels during local development (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
-- **JSON Formatting** -- NDJSON structured output for production environments, compatible with Azure Log Analytics and other log aggregation systems
-- **Context Injection** -- Automatically include invocation IDs, function names, and trace IDs in every log line via `inject_context(context)`
-- **Cold Start Detection** -- Automatically detect and flag cold starts in your logs without manual instrumentation
-- **Context Binding** -- Bind additional key-value pairs to loggers for persistent context across multiple log calls via `logger.bind(user_id="abc")`
-- **Host Config Warning** -- Automatically detect and warn about potential `host.json` logging level conflicts that silently suppress log output
-- **Idempotent Setup** -- Calling `setup_logging()` multiple times is safe and will not cause double-logging
-- **Zero Dependencies** -- Uses only the Python standard library; no external runtime dependencies
+Azure Functions projects often outgrow default logging quickly:
 
-## Quick Example
+- Raw logs are hard to scan locally.
+- Invocation metadata is missing unless manually carried around.
+- Startup behavior is unclear during cold-start debugging.
+- Local and production log consumers need different output formats.
+
+This library addresses those gaps with a small API surface.
+
+## Core Features
+
+- `setup_logging()` one-liner startup configuration.
+- Local colorized output (`format="color"`) for fast visual scanning.
+- Structured NDJSON output (`format="json"`) for production ingestion.
+- `inject_context(context)` to add invocation metadata fields.
+- Automatic `cold_start` flag detection on first invocation per process.
+- `FunctionLogger.bind()` for immutable request-scoped context binding.
+- Host-level `host.json` conflict warnings when Azure suppresses lower-level logs.
+- Idempotent setup to avoid duplicate reconfiguration.
+
+## What Gets Logged
+
+Depending on formatter and context, events include:
+
+- Timestamp, level, logger name, message.
+- Invocation metadata: `invocation_id`, `function_name`, `trace_id`, `cold_start`.
+- Structured per-event fields from keyword arguments.
+- Bound context keys from `bind()`.
+
+## Azure Handler Example
 
 ```python
 import azure.functions as func
-from azure_functions_logging import setup_logging, get_logger, inject_context
+from azure_functions_logging import get_logger, inject_context, setup_logging
 
-# Initialize logging (usually at the module level or in a startup hook)
-setup_logging()
-
-logger = get_logger(__name__)
-
-def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
-    # Inject Azure Functions context into the logging system
-    inject_context(context)
-
-    logger.info("Processing request")
-
-    # Context is automatically included in log output:
-    # invocation_id, function_name, trace_id, cold_start
-    return func.HttpResponse("Success", status_code=200)
-```
-
-### JSON Output (Production)
-
-```python
 setup_logging(format="json")
-
 logger = get_logger(__name__)
-logger.info("Processing request")
-# {"timestamp": "2026-03-12T10:00:00Z", "level": "INFO", "logger": "...", "message": "Processing request", ...}
+
+app = func.FunctionApp()
+
+
+@app.route(route="health")
+def health(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    inject_context(context)
+    request_logger = logger.bind(route="/health", method=req.method)
+    request_logger.info("health endpoint called")
+    return func.HttpResponse("ok", status_code=200)
 ```
 
-### Context Binding
+This combines runtime context injection and request binding in a safe, explicit flow.
 
-```python
-bound = logger.bind(user_id="abc", operation="checkout")
-bound.info("Processing")
-# Output includes user_id and operation in every log line
-```
+## Environment-Aware Behavior
 
-## Scope
+Behavior changes intentionally by runtime:
 
-This library is designed specifically for the **Azure Functions Python v2 programming model**. It relies on Python's standard `logging` module and does not introduce external dependencies for core functionality.
+- Local standalone process: installs handler and formatter (`color` or `json`).
+- Azure/Core Tools runtime: installs context filter only and avoids handler duplication.
 
-This package does **not** target distributed tracing, log aggregation pipelines, or OpenTelemetry integration. It focuses on making the logging experience better for developers writing Azure Functions in Python.
+!!! warning
+    In Azure-hosted execution, host-level `host.json` settings can still suppress logs even when application-level setup appears correct.
 
-## Compatibility
+## Recommended Defaults
 
-- Python 3.10, 3.11, 3.12, 3.13, 3.14
-- Azure Functions Python v2 programming model
-- Works in both local development and Azure-hosted environments
+Use these defaults unless you have a specific reason to diverge:
 
-## Next Steps
+- Local development: `setup_logging(format="color")`
+- Production environments: `setup_logging(format="json")`
+- Logger creation: `get_logger(__name__)`
+- Function entrypoint: `inject_context(context)` as first operation
 
-- [Installation](installation.md) -- How to add the package to your project
-- [Usage Guide](usage.md) -- Detailed guide on all logging features
-- [API Reference](api.md) -- Full documentation of classes and functions
-- [Architecture](architecture.md) -- Internal design principles and module structure
-- [Troubleshooting](troubleshooting.md) -- Common issues and solutions
+## Documentation Map
 
-## Project Links
+Start here, then branch by need:
 
-- [Source Code](https://github.com/yeongseon/azure-functions-logging)
-- [PyPI Package](https://pypi.org/project/azure-functions-logging/)
-- [Issue Tracker](https://github.com/yeongseon/azure-functions-logging/issues)
-- [Changelog](changelog.md)
-- [Contributing](contributing.md)
+- [Installation](installation.md) for package setup.
+- [Quickstart](getting-started.md) for first runnable flow.
+- [Configuration](configuration.md) for all `setup_logging()` options.
+- [Usage Guide](usage.md) for complete patterns and advanced sections.
+- [Examples](examples/basic_setup.md) for scenario-focused snippets.
+- [API Reference](api.md) for signatures and typed docs.
+- [Troubleshooting](troubleshooting.md) for production incident cases.
+- [FAQ](faq.md) for direct operational questions.
+
+## Design Goals
+
+The library stays intentionally narrow:
+
+- Improve application logging ergonomics.
+- Preserve Python standard logging compatibility.
+- Keep runtime dependencies minimal.
+- Avoid replacing tracing/APM platforms.
+
+It is a focused logging utility, not a full observability stack.
+
+## Next Actions
+
+If you are integrating today:
+
+1. Add package and call `setup_logging()` once.
+2. Update handlers to call `inject_context(context)`.
+3. Add request-scoped keys with `bind()`.
+4. Select `json` format for production tiers.
+5. Verify `host.json` level settings to avoid silent suppression.
+
+When these are complete, your logs become immediately easier to read, correlate, and operate.

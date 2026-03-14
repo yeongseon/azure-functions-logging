@@ -1,138 +1,190 @@
-# Architecture and Design
+# Architecture
 
-This document describes the internal architecture, module structure, and design principles of `azure-functions-logging`.
+This document explains how `azure-functions-logging` is structured internally and why key design choices support Azure Functions production behavior.
 
-## Module Structure
+## Design Objectives
 
-The package is organized into focused modules with clear separation of concerns:
+The package is intentionally focused:
 
-```
-src/azure_functions_logging/
-+-- __init__.py          # Public API exports (setup_logging, get_logger, inject_context)
-+-- _setup.py            # Logging system configuration and environment detection
-+-- _logger.py           # FunctionLogger implementation and context binding
-+-- _context.py          # contextvars management and ContextFilter
-+-- _json_formatter.py   # JsonFormatter for NDJSON output
-+-- _formatter.py        # ColorFormatter for local development
-+-- _host_config.py      # host.json conflict detection and warnings
-+-- py.typed             # PEP 561 marker for type checking support
-```
+- Keep logging setup small for application developers.
+- Preserve compatibility with Python standard `logging`.
+- Add invocation-aware metadata without invasive patterns.
+- Avoid duplicate handlers in runtime-managed environments.
+- Stay dependency-light and operationally predictable.
 
-### Module Responsibilities
+## High-Level Components
 
-**`__init__.py`** -- Public API surface. Exports `setup_logging`, `get_logger`, `inject_context`, `FunctionLogger`, and `JsonFormatter`. Contains the `get_logger()` factory function that wraps `logging.getLogger()` with a `FunctionLogger` instance.
+Core modules and responsibilities:
 
-**`_setup.py`** -- Entry point for logging configuration. Handles environment detection (Azure vs. local), creates formatters and handlers, configures the root logger, and ensures idempotent setup. This module decides whether to attach a full handler (local) or just a filter (Azure).
+- `__init__.py`: public exports and `get_logger()` factory.
+- `_setup.py`: setup orchestration, environment detection, idempotency.
+- `_logger.py`: `FunctionLogger` wrapper and immutable `bind()` behavior.
+- `_context.py`: context variables, `inject_context()`, and `ContextFilter`.
+- `_formatter.py`: local color formatter.
+- `_json_formatter.py`: structured JSON formatter.
+- `_host_config.py`: host policy mismatch warning logic.
 
-**`_logger.py`** -- Implements `FunctionLogger`, a thin wrapper around `logging.Logger` that adds context binding via `bind()`. The wrapper pattern avoids modifying the global logging system or requiring a custom logger class that might break compatibility with other libraries.
+## Public API Boundary
 
-**`_context.py`** -- Manages context propagation using Python's `contextvars` module. Implements `inject_context()` to extract invocation ID, function name, and trace ID from the Azure Functions context object. Implements `ContextFilter`, a `logging.Filter` subclass that reads context values from `contextvars` and attaches them to `LogRecord` objects.
+Public symbols intentionally kept small:
 
-**`_json_formatter.py`** -- Implements `JsonFormatter`, a `logging.Formatter` subclass that outputs NDJSON (Newline Delimited JSON). Each log record becomes a single-line JSON object with timestamp, level, logger name, message, context fields, exception info, and any extra fields.
+- `setup_logging`
+- `get_logger`
+- `FunctionLogger`
+- `JsonFormatter`
+- `inject_context`
 
-**`_formatter.py`** -- Implements `ColorFormatter`, a `logging.Formatter` subclass that produces colorized terminal output. Maps log levels to ANSI color codes (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red). Provides an `is_tty()` static method for external TTY detection, though colors are always emitted by the formatter itself.
+Everything else remains internal to keep migration and evolution manageable.
 
-**`_host_config.py`** -- Reads the `host.json` file (if present) to detect logging level conflicts. Azure Functions' `host.json` can override application-level log settings, silently suppressing log output. This module warns developers when it detects a mismatch.
+## Setup Pipeline
 
-## Design Principles
+`setup_logging()` is the entrypoint for configuration.
 
-### Zero-Config
+Behavior summary:
 
-`setup_logging()` detects the environment automatically and adjusts its behavior. No configuration is required for the common case. The function accepts optional parameters for customization, but sensible defaults cover most use cases.
+1. Validate input (`format` must be `color` or `json`).
+2. Enforce idempotency (first call wins).
+3. Build `ContextFilter`.
+4. Detect runtime environment.
+5. Apply local or runtime-safe setup strategy.
+6. Check potential host-level log suppression mismatch.
 
-### Non-Invasive
+## Environment Detection Strategy
 
-The library uses Python's standard `logging` module exclusively. It does not force a custom logger class hierarchy, monkey-patch the logging system, or introduce proprietary log handling. This ensures compatibility with any library that uses standard Python logging.
+Detection uses runtime environment variables:
 
-### Context Propagation via contextvars
+- Functions presence: `FUNCTIONS_WORKER_RUNTIME`
+- Azure hosted signal: `WEBSITE_INSTANCE_ID`
 
-Context fields (invocation ID, function name, trace ID, cold start) are stored using Python's `contextvars` module. This provides thread-safe and async-safe context management without requiring developers to pass context objects through their call stack.
+Why this matters:
 
-The flow:
+- Local standalone Python needs handler setup.
+- Azure/Core Tools generally already provide host-managed handlers.
 
-1. `inject_context(context)` is called in the Azure Functions handler
-2. Context fields are stored in `contextvars` for the current execution context
-3. `ContextFilter` reads the fields from `contextvars` for each log record
-4. The formatter (JSON or Color) includes the context fields in the output
+## Runtime-Safe Behavior in Azure/Core Tools
 
-### Silent Failure
+In Functions runtime contexts, setup avoids replacing host handler graph.
 
-`inject_context()` never raises exceptions, even if the provided object is missing expected attributes. This defensive approach prevents logging setup from crashing the application. Missing attributes result in `None` values in the log output.
+Instead, it:
 
-### Idempotent Setup
+- Installs `ContextFilter` onto existing handlers.
+- Installs filter on root logger for future handler coverage.
+- Preserves host-managed output pipeline.
 
-Calling `setup_logging()` multiple times is safe. Only the first call configures the logging system. Subsequent calls are no-ops. This prevents double-logging, duplicate handlers, and configuration conflicts when multiple modules or initialization paths call `setup_logging()`.
+This prevents duplicate output and alignment issues with platform logging.
 
-## Environment Detection
+## Local Standalone Behavior
 
-The library uses environment variables to detect whether it is running in an Azure Functions environment:
+In non-Functions environments:
 
-- **`FUNCTIONS_WORKER_RUNTIME`**: Set to `python` in Azure Functions
-- **`WEBSITE_INSTANCE_ID`**: Set in Azure App Service / Functions environments
+- Target logger level is set.
+- `StreamHandler` is created when needed.
+- Formatter is selected by `format` parameter.
+- `ContextFilter` is attached for metadata fields.
 
-### Azure Environment Behavior
+This gives deterministic local behavior with minimal code.
 
-When running in Azure, the Azure Functions host already configures logging handlers. Adding another handler would cause duplicate log output. In this case, `setup_logging()` only adds a `ContextFilter` to the existing root logger handler. This attaches context fields to log records without duplicating log output.
+## Context Propagation Model
 
-### Local Environment Behavior
+Invocation metadata is carried through `contextvars`:
 
-When running locally (no Azure environment variables detected), `setup_logging()` sets up a full handler with the selected formatter (`ColorFormatter` or `JsonFormatter`). This provides readable, formatted output for local development and testing.
+- `invocation_id_var`
+- `function_name_var`
+- `trace_id_var`
+- `cold_start_var`
 
-## Context Flow Diagram
+Benefits of `contextvars`:
 
-```
-Azure Functions Handler
-        |
-        v
-inject_context(context)
-        |
-        v
-contextvars (thread-local storage)
-   - invocation_id
-   - function_name
-   - trace_id
-   - cold_start
-        |
-        v
-ContextFilter (logging.Filter)
-   reads from contextvars
-   attaches to LogRecord
-        |
-        v
-Formatter (JsonFormatter or ColorFormatter)
-   reads from LogRecord
-   formats output string
-        |
-        v
-Handler (StreamHandler)
-   writes to stdout/stderr
-```
+- Thread-safe isolation.
+- Async task-safe isolation.
+- No need to pass context objects through deep call stacks.
+
+## Context Enrichment Flow
+
+Request-level flow:
+
+1. Handler calls `inject_context(context)`.
+2. Context values are extracted and stored in context variables.
+3. `ContextFilter` reads values for each log record.
+4. Formatter outputs record with context fields.
+
+This decouples business code from formatter implementation details.
+
+## Cold Start Detection Design
+
+Cold start is process-scoped and simple by design:
+
+- Internal flag starts `True`.
+- First `inject_context()` sets `cold_start=True`, then flips flag.
+- Future calls in same process return `False`.
+
+This model maps well to Azure Functions worker reuse semantics.
 
 ## FunctionLogger Wrapper Pattern
 
-The `FunctionLogger` class wraps a standard `logging.Logger` rather than subclassing it. This design choice has several benefits:
+`FunctionLogger` wraps standard loggers rather than replacing logging internals.
 
-- **Compatibility**: Other libraries that interact with the logging system see a standard `logging.Logger`. No custom metaclass registration or logger class replacement is needed.
-- **Immutable binding**: `bind()` returns a new `FunctionLogger` instance with the additional context, leaving the original logger unchanged. This makes it safe to create request-scoped loggers without affecting other parts of the application.
-- **Standard interface**: `FunctionLogger` exposes the same methods as `logging.Logger` (debug, info, warning, error, critical, exception, setLevel, isEnabledFor, getEffectiveLevel). Code using `FunctionLogger` can be switched to a standard logger without changes.
+Key properties:
 
-## Cold Start Detection
+- Full standard method familiarity (`info`, `warning`, `exception`, etc.).
+- Immutable binding (`bind()` returns a new wrapper).
+- Bound keys merged into per-record extra context.
 
-Cold start detection is implemented at the module level using a global boolean flag:
+Why wrapper over subclassing global logger:
 
-1. On module import, a flag is set to `True`
-2. The first call to `inject_context()` checks the flag, sets `cold_start=True` in the context, and flips the flag to `False`
-3. All subsequent calls to `inject_context()` set `cold_start=False`
+- Less risky integration with existing libraries.
+- Easier incremental adoption.
+- Lower chance of side effects in framework code.
 
-This approach works because Azure Functions reuses the same Python process for multiple invocations. The first invocation after process startup is the cold start. No external state or timing logic is needed.
+## Formatter Responsibilities
+
+### Color Formatter
+
+- Optimized for local human readability.
+- Shows timestamp, level, logger, message.
+- Includes context metadata when present.
+- Appends traceback text for exceptions.
+
+### JSON Formatter
+
+- Outputs one JSON object per line.
+- Captures core fields and context metadata.
+- Preserves custom record fields under `extra`.
+- Supports downstream indexing and analytics workflows.
+
+## host.json Conflict Detection
+
+Host-level settings can suppress app-level log events.
+
+The warning helper:
+
+- Reads `host.json` when present.
+- Resolves host default level into logging equivalent.
+- Warns if host policy is stricter than configured level.
+
+This closes a common observability blind spot during setup.
 
 ## Error Handling Philosophy
 
-The library follows a "never crash the application" approach:
+The library prioritizes application continuity:
 
-- `inject_context()` catches all exceptions when accessing context fields and defaults to `None`
-- `setup_logging()` validates the format parameter and raises `ValueError` for unsupported values
-- `ContextFilter` never raises during filtering; missing context fields default to `None`
-- `host.json` reading catches file I/O errors and JSON parse errors silently
+- Context extraction failures are silent and non-fatal.
+- Missing context fields degrade to `None`.
+- Setup validates format strictly and fails fast for invalid options.
+- Host config parsing failures fail safe without crashing the app.
 
-This is appropriate for a logging library because a failure in logging should never prevent the application from doing its primary work.
+## Operational Implications
+
+For production teams, this architecture means:
+
+- You can adopt gradually without replacing logging foundations.
+- Context correlation is easy with a single injection call.
+- Local and runtime behavior differ intentionally to match platform constraints.
+- Cold start analysis becomes available without custom plumbing.
+
+## Related Documents
+
+- [Usage Guide](usage.md)
+- [Configuration](configuration.md)
+- [API Reference](api.md)
+- [Troubleshooting](troubleshooting.md)
