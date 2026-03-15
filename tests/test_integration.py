@@ -83,6 +83,8 @@ def test_public_api_exports() -> None:
         "__version__",
         "FunctionLogger",
         "JsonFormatter",
+        "RedactionFilter",
+        "SamplingFilter",
         "get_logger",
         "inject_context",
         "setup_logging",

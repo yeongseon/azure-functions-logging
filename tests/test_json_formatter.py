@@ -27,7 +27,8 @@ def test_basic_json_output_is_valid_and_has_expected_fields() -> None:
     output = formatter.format(record)
     payload = json.loads(output)
 
-    assert output.endswith("\n")
+    # NDJSON: formatter no longer appends \n; StreamHandler adds it
+    assert json.loads(output) is not None
     assert payload["level"] == "INFO"
     assert payload["logger"] == "test.logger"
     assert payload["message"] == "basic message"

@@ -87,3 +87,55 @@ def test_exception_info_is_included() -> None:
 def test_is_tty_returns_bool() -> None:
     result = ColorFormatter.is_tty()
     assert isinstance(result, bool)
+
+
+def test_include_extra_shows_bind_context_fields() -> None:
+    formatter = ColorFormatter(include_extra=True)
+    record = _make_record(msg="with extra")
+    record.user_id = "user-1"  # type: ignore[attr-defined]
+    record.request_id = "req-123"  # type: ignore[attr-defined]
+
+    output = formatter.format(record)
+
+    assert "user_id=user-1" in output
+    assert "request_id=req-123" in output
+
+
+def test_include_extra_masks_sensitive_keys() -> None:
+    formatter = ColorFormatter(include_extra=True)
+    record = _make_record(msg="sensitive")
+    record.password = "s3cr3t"  # type: ignore[attr-defined]
+    record.token = "tok123"  # type: ignore[attr-defined]
+    record.authorization = "Bearer xyz"  # type: ignore[attr-defined]
+
+    output = formatter.format(record)
+
+    assert "s3cr3t" not in output
+    assert "tok123" not in output
+    assert "Bearer xyz" not in output
+    assert "password=***" in output
+    assert "token=***" in output
+    assert "authorization=***" in output
+
+
+def test_include_extra_false_by_default_hides_extra_fields() -> None:
+    formatter = ColorFormatter()  # include_extra defaults to False
+    record = _make_record(msg="no extra")
+    record.user_id = "should-not-appear"  # type: ignore[attr-defined]
+
+    output = formatter.format(record)
+
+    assert "user_id" not in output
+    assert "should-not-appear" not in output
+
+
+def test_include_extra_with_allowlist_filters_keys() -> None:
+    formatter = ColorFormatter(include_extra=True, extra_allowlist=["user_id"])
+    record = _make_record(msg="allowlist")
+    record.user_id = "u1"  # type: ignore[attr-defined]
+    record.request_id = "r1"  # type: ignore[attr-defined]
+
+    output = formatter.format(record)
+
+    assert "user_id=u1" in output
+    assert "request_id" not in output

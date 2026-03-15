@@ -74,4 +74,4 @@ class JsonFormatter(logging.Formatter):
             "extra": extra,
         }
 
-        return f"{json.dumps(payload, ensure_ascii=False)}\n"
+        return json.dumps(payload, ensure_ascii=False)

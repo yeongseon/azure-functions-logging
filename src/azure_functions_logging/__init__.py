@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ._context import inject_context
+from ._filters import RedactionFilter, SamplingFilter
 from ._json_formatter import JsonFormatter
 from ._logger import FunctionLogger
 from ._setup import setup_logging
@@ -11,12 +12,14 @@ __all__ = [
     "__version__",
     "FunctionLogger",
     "JsonFormatter",
+    "RedactionFilter",
+    "SamplingFilter",
     "get_logger",
     "inject_context",
     "setup_logging",
 ]
 
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 
 
 def get_logger(name: str | None = None) -> FunctionLogger:

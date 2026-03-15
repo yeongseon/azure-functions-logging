@@ -86,19 +86,19 @@ def inject_context(context: Any) -> None:
     try:
         invocation_id_var.set(getattr(context, "invocation_id", None))
     except Exception:  # nosec B110 — Principle 3: context failures are silent
-        pass
+        invocation_id_var.set(None)
 
     try:
         function_name_var.set(getattr(context, "function_name", None))
     except Exception:  # nosec B110 — Principle 3: context failures are silent
-        pass
+        function_name_var.set(None)
 
     try:
         trace_context = getattr(context, "trace_context", None)
         trace_parent = getattr(trace_context, "trace_parent", None) if trace_context else None
         trace_id_var.set(_extract_trace_id(trace_parent))
     except Exception:  # nosec B110 — Principle 3: context failures are silent
-        pass
+        trace_id_var.set(None)
 
     try:
         cold_start_var.set(_check_cold_start())

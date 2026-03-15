@@ -74,3 +74,21 @@ def test_no_warning_when_logging_config_is_missing(
         warn_host_json_level_conflict(logging.INFO)
 
     assert len(warning_list) == 0
+
+
+def test_warns_when_host_level_is_none_disables_all_logging(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """logLevel.default = 'None' disables all logging — should always warn."""
+    _write_host_json(
+        tmp_path / "host.json",
+        {"logging": {"logLevel": {"default": "None"}}},
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.warns(UserWarning, match="more restrictive") as warning_list:
+        warn_host_json_level_conflict(logging.DEBUG)
+
+    message = str(warning_list[0].message)
+    assert "'None'" in message

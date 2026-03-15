@@ -29,14 +29,15 @@ def setup_logging(
     level: int = logging.INFO,
     format: str = "color",
     logger_name: str | None = None,
+    functions_formatter: logging.Formatter | None = None,
 ) -> None:
     """Configure logging for the current environment.
-
     Behavior depends on the detected environment:
 
     - **Azure / Core Tools**: Installs ``ContextFilter`` on the root logger's
       handlers only. Does NOT add handlers or modify the root logger level
-      (respects ``host.json`` configuration).
+      (respects ``host.json`` configuration). If ``functions_formatter`` is
+      provided, it is applied to every root handler before the filter is added.
     - **Standalone local development**: Adds a ``StreamHandler`` with
       ``ColorFormatter`` or ``JsonFormatter`` to the specified logger
       (or root logger if ``logger_name`` is None). Sets the level.
@@ -47,9 +48,14 @@ def setup_logging(
     Args:
         level: Logging level for local development. Ignored in Azure/Core Tools.
         format: Log output format for local development. Supported values are
-            ``"color"`` (default) and ``"json"``.
+            ``"color"`` (default) and ``"json"``. Ignored when
+            ``functions_formatter`` is provided.
         logger_name: Optional logger name to configure. When None, configures
             the root logger (local dev) or installs filter on root handlers (Azure).
+        functions_formatter: Optional custom formatter applied to all root
+            handlers when running inside Azure/Core Tools. Useful for
+            injecting a custom JSON formatter or third-party formatter
+            without losing ContextFilter integration.
     """
     global _setup_done
     if format not in {"color", "json"}:
@@ -67,6 +73,8 @@ def setup_logging(
         # Azure or Core Tools: install filter only, don't touch handlers/level
         root = logging.getLogger()
         for handler in root.handlers:
+            if functions_formatter is not None:
+                handler.setFormatter(functions_formatter)
             handler.addFilter(context_filter)
         # Also install on any future handlers via the logger itself
         root.addFilter(context_filter)

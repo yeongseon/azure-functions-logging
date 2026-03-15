@@ -7,12 +7,12 @@ import logging
 from pathlib import Path
 import warnings
 
-_HOST_LEVEL_TO_LOGGING: dict[str, int | None] = {
+_HOST_LEVEL_TO_LOGGING: dict[str, int] = {
     "critical": logging.CRITICAL,
     "debug": logging.DEBUG,
     "error": logging.ERROR,
     "information": logging.INFO,
-    "none": None,
+    "none": logging.CRITICAL + 10,
     "trace": logging.DEBUG,
     "warning": logging.WARNING,
 }

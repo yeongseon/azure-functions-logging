@@ -84,3 +84,19 @@ def test_is_azure_hosted() -> None:
         assert _is_azure_hosted() is False
     with patch.dict(os.environ, {"WEBSITE_INSTANCE_ID": "abc123"}, clear=True):
         assert _is_azure_hosted() is True
+
+
+def test_setup_logging_functions_formatter_applied_in_azure_env() -> None:
+    root = logging.getLogger()
+    root.filters.clear()
+    test_handler = logging.StreamHandler()
+    root.handlers = [test_handler]
+    custom_formatter = logging.Formatter("%(message)s")
+
+    with patch.dict(os.environ, {"FUNCTIONS_WORKER_RUNTIME": "python"}, clear=True):
+        setup_logging(functions_formatter=custom_formatter)
+
+    assert test_handler.formatter is custom_formatter
+
+    root.handlers = []
+    root.filters.clear()

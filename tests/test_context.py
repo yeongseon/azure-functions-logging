@@ -141,3 +141,32 @@ def test_context_filter_reads_contextvars_after_inject_context() -> None:
     assert record.function_name == "fn-z"  # type: ignore[attr-defined]
     assert record.trace_id == "ffffffffffffffffffffffffffffffff"  # type: ignore[attr-defined]
     assert record.cold_start is True  # type: ignore[attr-defined]
+
+
+def test_inject_context_resets_vars_on_failure() -> None:
+    """inject_context resets vars to None on attribute access failure
+    to prevent context leak from a previous invocation.
+    """
+    # Pre-populate vars with stale values from a previous invocation
+    invocation_id_var.set("stale-inv")
+    function_name_var.set("stale-fn")
+    trace_id_var.set("stale-trace")
+
+    class BrokenContext:
+        @property
+        def invocation_id(self) -> str:
+            raise RuntimeError("broken")
+
+        @property
+        def function_name(self) -> str:
+            raise RuntimeError("broken")
+
+        @property
+        def trace_context(self) -> object:
+            raise RuntimeError("broken")
+
+    inject_context(BrokenContext())
+
+    assert invocation_id_var.get() is None
+    assert function_name_var.get() is None
+    assert trace_id_var.get() is None

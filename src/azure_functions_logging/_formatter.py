@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Iterable
 
 # ANSI color codes
 _COLORS: dict[int, str] = {
@@ -15,6 +16,42 @@ _COLORS: dict[int, str] = {
 }
 _RESET = "\033[0m"
 
+# Keys whose values are masked in extra output
+_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {"password", "token", "authorization", "secret", "api_key", "apikey", "passwd"}
+)
+
+_STANDARD_RECORD_FIELDS: frozenset[str] = frozenset(
+    {
+        "args",
+        "created",
+        "exc_info",
+        "exc_text",
+        "filename",
+        "funcName",
+        "levelname",
+        "levelno",
+        "lineno",
+        "message",
+        "module",
+        "msecs",
+        "msg",
+        "name",
+        "pathname",
+        "process",
+        "processName",
+        "relativeCreated",
+        "stack_info",
+        "taskName",
+        "thread",
+        "threadName",
+    }
+)
+
+_CONTEXT_FIELDS: frozenset[str] = frozenset(
+    {"invocation_id", "function_name", "trace_id", "cold_start"}
+)
+
 
 class ColorFormatter(logging.Formatter):
     """Colorized log formatter for local development.
@@ -23,10 +60,29 @@ class ColorFormatter(logging.Formatter):
 
     Context fields (invocation_id, function_name, etc.) are appended
     when present on the LogRecord (set by ContextFilter).
+
+    Args:
+        include_extra: When True, appends ``bind()`` context fields (extra
+            attributes on the LogRecord) to the formatted output. Sensitive
+            keys (password, token, secret, authorization, api_key, passwd,
+            apikey) are replaced with ``"***"``. Default: False.
+        extra_allowlist: Optional set of extra field names to include. When
+            provided, only keys in this set are shown (sensitive keys are
+            still masked). When None (default), all non-standard fields are
+            included if ``include_extra=True``.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        include_extra: bool = False,
+        extra_allowlist: Iterable[str] | None = None,
+    ) -> None:
         super().__init__()
+        self._include_extra = include_extra
+        self._extra_allowlist: frozenset[str] | None = (
+            frozenset(extra_allowlist) if extra_allowlist is not None else None
+        )
 
     def format(self, record: logging.LogRecord) -> str:
         """Format a log record with colors and context fields."""
@@ -53,6 +109,17 @@ class ColorFormatter(logging.Formatter):
         cold_start = getattr(record, "cold_start", None)
         if cold_start is True:
             context_parts.append("cold_start=true")
+
+        # Extra bind() fields
+        if self._include_extra:
+            excluded = _STANDARD_RECORD_FIELDS | _CONTEXT_FIELDS
+            for key, value in record.__dict__.items():
+                if key in excluded:
+                    continue
+                if self._extra_allowlist is not None and key not in self._extra_allowlist:
+                    continue
+                masked_value = "***" if key.lower() in _SENSITIVE_KEYS else value
+                context_parts.append(f"{key}={masked_value}")
 
         # Build output
         base = f"{time_str} {level_str} {name_str}  {msg}"
