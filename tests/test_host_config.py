@@ -92,3 +92,54 @@ def test_warns_when_host_level_is_none_disables_all_logging(
 
     message = str(warning_list[0].message)
     assert "'None'" in message
+
+
+def test_no_warning_when_host_json_is_malformed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Lines 29-30: invalid JSON in host.json is silently ignored."""
+    (tmp_path / "host.json").write_text("not valid json", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always")
+        warn_host_json_level_conflict(logging.INFO)
+
+    assert len(warning_list) == 0
+
+
+def test_no_warning_when_log_level_value_is_not_a_string(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Line 38: logLevel.default is not a str (e.g. an integer) -> silently ignored."""
+    _write_host_json(
+        tmp_path / "host.json",
+        {"logging": {"logLevel": {"default": 42}}},
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always")
+        warn_host_json_level_conflict(logging.DEBUG)
+
+    assert len(warning_list) == 0
+
+
+def test_no_warning_when_host_level_is_unrecognized_string(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Line 42: logLevel.default is a string not in _HOST_LEVEL_TO_LOGGING -> silently ignored."""
+    _write_host_json(
+        tmp_path / "host.json",
+        {"logging": {"logLevel": {"default": "SuperVerbose"}}},
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always")
+        warn_host_json_level_conflict(logging.DEBUG)
+
+    assert len(warning_list) == 0

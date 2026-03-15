@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-15
+
+### Added
+
+- `SamplingFilter` for probabilistic log sampling
+- `RedactionFilter` for masking sensitive fields in log records
+- `ColorFormatter` `include_extra` parameter for structured extra fields in dev output
+- `functions_formatter` parameter in `setup_logging()` for custom Azure handler formatting
+- `host.json` `None` log level support (`logLevel.default: none`)
+- Context leak reset between invocations (`invocation_id` and `function_name` cleared on re-entry)
+
+### Fixed
+
+- NDJSON output line-break handling in `JsonFormatter`
+
 ## [0.2.2] - 2026-03-14
 
 ### Added
