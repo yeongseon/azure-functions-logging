@@ -77,40 +77,40 @@ def test_sampling_filter_invalid_window_raises() -> None:
 def test_redaction_filter_masks_default_sensitive_keys() -> None:
     flt = RedactionFilter()
     record = _make_record(msg="login")
-    record.password = "s3cr3t"  # type: ignore[attr-defined]
-    record.token = "tok123"  # type: ignore[attr-defined]
+    setattr(record, "password", "s3cr3t")
+    setattr(record, "token", "tok123")
 
     result = flt.filter(record)
 
     assert result is True
-    assert record.password == "***"  # type: ignore[attr-defined]
-    assert record.token == "***"  # type: ignore[attr-defined]
+    assert getattr(record, "password") == "***"
+    assert getattr(record, "token") == "***"
 
 
 def test_redaction_filter_leaves_non_sensitive_keys_unchanged() -> None:
     flt = RedactionFilter()
     record = _make_record(msg="safe")
-    record.user_id = "u-1"  # type: ignore[attr-defined]
-    record.request_id = "r-1"  # type: ignore[attr-defined]
+    setattr(record, "user_id", "u-1")
+    setattr(record, "request_id", "r-1")
 
     flt.filter(record)
 
-    assert record.user_id == "u-1"  # type: ignore[attr-defined]
-    assert record.request_id == "r-1"  # type: ignore[attr-defined]
+    assert getattr(record, "user_id") == "u-1"
+    assert getattr(record, "request_id") == "r-1"
 
 
 def test_redaction_filter_custom_sensitive_keys() -> None:
     flt = RedactionFilter(sensitive_keys=["account_number", "ssn"])
     record = _make_record(msg="custom")
-    record.account_number = "12345678"  # type: ignore[attr-defined]
-    record.ssn = "999-99-9999"  # type: ignore[attr-defined]
-    record.user_id = "u-1"  # type: ignore[attr-defined]
+    setattr(record, "account_number", "12345678")
+    setattr(record, "ssn", "999-99-9999")
+    setattr(record, "user_id", "u-1")
 
     flt.filter(record)
 
-    assert record.account_number == "***"  # type: ignore[attr-defined]
-    assert record.ssn == "***"  # type: ignore[attr-defined]
-    assert record.user_id == "u-1"  # type: ignore[attr-defined]
+    assert getattr(record, "account_number") == "***"
+    assert getattr(record, "ssn") == "***"
+    assert getattr(record, "user_id") == "u-1"
 
 
 def test_redaction_filter_does_not_touch_standard_fields() -> None:
@@ -128,10 +128,10 @@ def test_redaction_filter_does_not_touch_standard_fields() -> None:
 def test_redaction_filter_key_matching_is_case_insensitive() -> None:
     flt = RedactionFilter()
     record = _make_record(msg="case")
-    record.PASSWORD = "abc"  # type: ignore[attr-defined]
-    record.Token = "xyz"  # type: ignore[attr-defined]
+    setattr(record, "PASSWORD", "abc")
+    setattr(record, "Token", "xyz")
 
     flt.filter(record)
 
-    assert record.PASSWORD == "***"  # type: ignore[attr-defined]
-    assert record.Token == "***"  # type: ignore[attr-defined]
+    assert getattr(record, "PASSWORD") == "***"
+    assert getattr(record, "Token") == "***"
