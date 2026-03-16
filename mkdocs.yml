@@ -29,6 +29,7 @@ nav:
       - Host JSON Conflicts: examples/host_json_conflicts.md
       - Logger Name Targeting: examples/logger_name_targeting.md
       - Third-Party Noise Control: examples/third_party_noise_control.md
+      - With azure-functions-scaffold: examples/with_scaffold.md
   - API Reference: api.md
   - Contributing:
       - Development: development.md
