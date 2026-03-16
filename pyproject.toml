@@ -1,6 +1,7 @@
 [project]
 name = "azure-functions-logging"
 description = "Developer-friendly logging helpers for Azure Functions Python"
+keywords = ["azure-functions", "azure", "python", "v2", "logging", "structured-logging", "json", "serverless"]
 authors = [{ name = "Yeongseon Choe", email = "yeongseon.choe@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
