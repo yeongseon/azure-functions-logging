@@ -27,3 +27,4 @@ dist/
 
 # Docs
 site/
+.venv-review/
