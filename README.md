@@ -28,6 +28,16 @@ Azure Functions Python logging has specific failure modes that generic logging l
 | Local vs cloud output mismatch | Colorized output breaks in production pipelines | Environment-aware formatter switching |
 | PII leaking into logs | Sensitive fields logged in exception tracebacks | `RedactionFilter` with pattern matching |
 
+## Before / After
+
+**Without** `azure-functions-logging` — plain `print()` output, no context, no structure:
+
+![Before: plain print output with no context](docs/assets/demo-before.png)
+
+**With** `azure-functions-logging` — colorized local dev output and production-ready JSON:
+
+![After: structured color output and JSON](docs/assets/demo-after.png)
+
 ## Installation
 
 ```bash
