@@ -269,3 +269,33 @@ When adding new features, ensure coverage does not decrease. New code should hav
 - **Test edge cases**: Missing attributes, None values, empty strings, concurrent access
 - **Test the public API**: Focus on testing through `setup_logging()`, `get_logger()`, and `inject_context()` rather than internal implementations
 - **Regression tests**: Every bug fix must include a test that would have caught the bug
+
+## Real Azure E2E Tests
+
+The project includes a real Azure end-to-end test workflow that deploys an actual Function App to Azure and validates HTTP endpoints.
+
+### Workflow
+
+- **File**: `.github/workflows/e2e-azure.yml`
+- **Trigger**: Manual (`workflow_dispatch`) or weekly schedule (Mondays 02:00 UTC)
+- **Infrastructure**: Azure Consumption plan, `koreacentral` region
+- **Cleanup**: Resource group deleted immediately after tests (`if: always()`)
+
+### Running E2E Tests
+
+```bash
+gh workflow run e2e-azure.yml --ref main
+```
+
+### Required Secrets & Variables
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `AZURE_CLIENT_ID` | Secret | App Registration Client ID (OIDC) |
+| `AZURE_TENANT_ID` | Secret | Azure Tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | Secret | Azure Subscription ID |
+| `AZURE_LOCATION` | Variable | Azure region (default: `koreacentral`) |
+
+### Test Report
+
+HTML test report is uploaded as a GitHub Actions artifact (retained 30 days).
