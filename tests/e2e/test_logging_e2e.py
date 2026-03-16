@@ -23,6 +23,7 @@ import requests
 
 BASE_URL = os.environ.get("E2E_BASE_URL", "").rstrip("/")
 APPINSIGHTS_NAME = os.environ.get("APPINSIGHTS_NAME", "")
+APPINSIGHTS_RG = os.environ.get("E2E_RESOURCE_GROUP", "")
 SKIP_REASON = "E2E_BASE_URL not set — skipping real-Azure e2e tests"
 SKIP_AI_REASON = "APPINSIGHTS_NAME not set — skipping App Insights log query tests"
 
@@ -41,7 +42,7 @@ def warmup() -> None:
     while time.time() < deadline:
         try:
             r = requests.get(f"{BASE_URL}/api/health", timeout=10)
-            if r.status_code < 500:
+            if r.status_code == 200:
                 return
         except requests.RequestException:
             pass
@@ -75,6 +76,7 @@ def _query_app_insights(query: str) -> list[dict]:  # type: ignore[type-arg]
         [
             "az", "monitor", "app-insights", "query",
             "--app", APPINSIGHTS_NAME,
+            "--resource-group", APPINSIGHTS_RG,
             "--analytics-query", query,
             "--output", "json",
         ],

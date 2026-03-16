@@ -92,6 +92,7 @@ jobs:
         env:
           E2E_BASE_URL: https://${{ steps.names.outputs.app }}.azurewebsites.net
           APPINSIGHTS_NAME: ${{ steps.names.outputs.ai }}
+          E2E_RESOURCE_GROUP: ${{ steps.names.outputs.rg }}
 
       - name: Upload e2e report
         if: always()
