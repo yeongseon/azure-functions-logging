@@ -135,3 +135,80 @@ def test_redaction_filter_key_matching_is_case_insensitive() -> None:
 
     assert getattr(record, "PASSWORD") == "***"
     assert getattr(record, "Token") == "***"
+
+
+def test_redaction_filter_recursively_masks_nested_dict_keys() -> None:
+    flt = RedactionFilter()
+    record = _make_record(msg="nested")
+    setattr(
+        record,
+        "payload",
+        {"password": "secret", "nested": {"token": "abc", "safe": "ok"}},
+    )
+
+    flt.filter(record)
+
+    assert getattr(record, "payload") == {
+        "password": "***",
+        "nested": {"token": "***", "safe": "ok"},
+    }
+
+
+def test_redaction_filter_recursively_masks_deeply_nested_dict_keys() -> None:
+    flt = RedactionFilter()
+    record = _make_record(msg="deep")
+    setattr(
+        record,
+        "context",
+        {"level_1": {"level_2": {"authorization": "Bearer x", "value": 42}}},
+    )
+
+    flt.filter(record)
+
+    assert getattr(record, "context") == {
+        "level_1": {"level_2": {"authorization": "***", "value": 42}}
+    }
+
+
+def test_redaction_filter_recursively_masks_dicts_inside_lists() -> None:
+    flt = RedactionFilter()
+    record = _make_record(msg="list")
+    setattr(
+        record,
+        "events",
+        [{"token": "abc"}, {"safe": "value"}, {"authorization": "Bearer y"}],
+    )
+
+    flt.filter(record)
+
+    assert getattr(record, "events") == [
+        {"token": "***"},
+        {"safe": "value"},
+        {"authorization": "***"},
+    ]
+
+
+def test_redaction_filter_recursively_masks_mixed_nested_structures() -> None:
+    flt = RedactionFilter()
+    record = _make_record(msg="mixed")
+    setattr(
+        record,
+        "metadata",
+        {
+            "items": [
+                {"secret": "s-1", "nested": [{"api_key": "k-1"}, {"safe": "ok"}]},
+                "raw",
+            ],
+            "profile": {"passwd": "p-1", "name": "alice"},
+        },
+    )
+
+    flt.filter(record)
+
+    assert getattr(record, "metadata") == {
+        "items": [
+            {"secret": "***", "nested": [{"api_key": "***"}, {"safe": "ok"}]},
+            "raw",
+        ],
+        "profile": {"passwd": "***", "name": "alice"},
+    }
