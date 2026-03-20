@@ -63,6 +63,7 @@ class FunctionLogger:
         if not self._logger.isEnabledFor(level):
             return
         extra = kwargs.pop("extra", None) or {}
+        extra.update(kwargs)
         extra.update(self._context)
         self._logger.log(
             level,
@@ -72,7 +73,6 @@ class FunctionLogger:
             stack_info=stack_info,
             stacklevel=stacklevel,
             extra=extra,
-            **kwargs,
         )
 
     def debug(self, msg: object, *args: Any, **kwargs: Any) -> None:

@@ -91,6 +91,20 @@ def test_extra_from_bind_passed_to_underlying_logger() -> None:
     assert kwargs["extra"] == {"request_id": "r1", "user_id": "u1"}
 
 
+def test_arbitrary_kwargs_are_merged_into_extra() -> None:
+    underlying = _mock_underlying_logger()
+    logger = FunctionLogger(underlying).bind(function_id="f1")
+
+    logger.info("order accepted", order_id="o-999", tenant_id="t-1")
+
+    _, kwargs = underlying.log.call_args
+    assert kwargs["extra"] == {
+        "order_id": "o-999",
+        "tenant_id": "t-1",
+        "function_id": "f1",
+    }
+
+
 def test_is_enabled_for_get_effective_level_and_set_level() -> None:
     underlying = _mock_underlying_logger()
     logger = FunctionLogger(underlying)
@@ -108,3 +122,13 @@ def test_is_enabled_for_get_effective_level_and_set_level() -> None:
 def test_name_property() -> None:
     logger = FunctionLogger(_mock_underlying_logger())
     assert logger.name == "mock.logger"
+
+
+def test_log_returns_early_when_level_disabled() -> None:
+    underlying = _mock_underlying_logger()
+    underlying.isEnabledFor.return_value = False
+    logger = FunctionLogger(underlying)
+
+    logger.info("should not log", order_id="o-999")
+
+    underlying.log.assert_not_called()
