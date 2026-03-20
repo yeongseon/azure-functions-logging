@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Iterable
+from typing import Any, Iterable
 
 # Default set of sensitive keys masked by RedactionFilter
 _DEFAULT_SENSITIVE_KEYS: frozenset[str] = frozenset(
@@ -26,6 +26,25 @@ _DEFAULT_SENSITIVE_KEYS: frozenset[str] = frozenset(
 )
 
 _MASK = "***"
+
+
+def _redact_value(
+    value: Any,
+    sensitive_keys: frozenset[str],
+    mask: str = _MASK,
+) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: (
+                mask
+                if isinstance(key, str) and key.lower() in sensitive_keys
+                else _redact_value(item, sensitive_keys, mask)
+            )
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact_value(item, sensitive_keys, mask) for item in value]
+    return value
 
 # Standard LogRecord fields that RedactionFilter should never touch
 _STANDARD_RECORD_FIELDS: frozenset[str] = frozenset(
@@ -152,4 +171,8 @@ class RedactionFilter(logging.Filter):
                 continue
             if key.lower() in self._sensitive_keys:
                 setattr(record, key, _MASK)
+            else:
+                value = getattr(record, key)
+                if isinstance(value, (dict, list)):
+                    setattr(record, key, _redact_value(value, self._sensitive_keys))
         return True
