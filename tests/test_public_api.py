@@ -1,6 +1,6 @@
 """Tests for the public API surface of azure-functions-logging."""
 
-import azure_functions_logging
+import azure_functions_logging  # pyright: ignore[reportMissingImports]
 
 
 class TestAPISurface:
@@ -18,14 +18,14 @@ class TestAPISurface:
             "setup_logging",
         }
 
-    def test_version_is_0_3_0(self) -> None:
-        assert azure_functions_logging.__version__ == "0.3.0"
+    def test_version_is_0_4_0(self) -> None:
+        assert azure_functions_logging.__version__ == "0.4.0"
 
     def test_version_is_string(self) -> None:
         assert isinstance(azure_functions_logging.__version__, str)
 
     def test_public_names_are_importable(self) -> None:
-        from azure_functions_logging import (  # noqa: F401
+        from azure_functions_logging import (  # noqa: F401  # pyright: ignore[reportMissingImports]
             FunctionLogger,
             JsonFormatter,
             RedactionFilter,
