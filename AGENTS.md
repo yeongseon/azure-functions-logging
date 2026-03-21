@@ -6,7 +6,6 @@
 ## Read First
 - `README.md`
 - `CONTRIBUTING.md`
-- `docs/agent-playbook.md`
 
 ## Working Rules
 - The root logger is never modified by this library — only named loggers are configured.
