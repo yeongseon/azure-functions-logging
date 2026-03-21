@@ -19,7 +19,7 @@ __all__ = [
     "setup_logging",
 ]
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 
 def get_logger(name: str | None = None) -> FunctionLogger:
