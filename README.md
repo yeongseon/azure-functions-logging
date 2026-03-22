@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
 [![CI](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-logging/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/release.yml)
+[![Release](https://github.com/yeongseon/azure-functions-logging/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/publish-pypi.yml)
 [![Security Scans](https://github.com/yeongseon/azure-functions-logging/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/yeongseon/azure-functions-logging/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-logging)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
@@ -12,10 +12,15 @@
 
 Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-**Invocation-aware observability for Azure Functions Python v2.**  
+**Invocation-aware observability for Azure Functions Python v2.**
 Surfaces `invocation_id`, detects cold starts, warns on `host.json` misconfig, and outputs Application Insights-ready structured logs — without replacing Python's standard `logging`.
 
-## Why This Exists
+---
+
+Part of the **Azure Functions Python DX Toolkit**
+→ Bring FastAPI-like developer experience to Azure Functions
+
+## Why this exists
 
 Azure Functions Python logging has specific failure modes that generic logging libraries don't address:
 
@@ -27,6 +32,13 @@ Azure Functions Python logging has specific failure modes that generic logging l
 | Noisy third-party loggers | `azure-core`, `urllib3` flood your Application Insights | `SamplingFilter` / `RedactionFilter` |
 | Local vs cloud output mismatch | Colorized output breaks in production pipelines | Environment-aware formatter switching |
 | PII leaking into logs | Sensitive fields logged in exception tracebacks | `RedactionFilter` with pattern matching |
+
+## What it does
+
+- **Invocation context** — auto-injects `invocation_id`, `function_name`, `cold_start` into every log
+- **Structured JSON output** — Application Insights-ready NDJSON format for production
+- **Noise control** — `SamplingFilter` rate-limits chatty third-party loggers
+- **PII protection** — `RedactionFilter` masks sensitive fields before they reach log aggregation
 
 ## Before / After
 
@@ -182,6 +194,14 @@ def process_order(order_id: str) -> None:
 
 Create bound loggers per-invocation. Do not cache them at module level.
 
+## When to use
+
+- You need structured, queryable logs in Application Insights
+- You want `invocation_id` correlation across all logs for a single request
+- You need cold start detection without custom instrumentation
+- You want PII redaction or noise control for third-party loggers
+- Your `host.json` config silently suppresses logs and you don't know why
+
 ## Documentation
 
 - Full docs: [yeongseon.github.io/azure-functions-logging](https://yeongseon.github.io/azure-functions-logging/)
@@ -191,11 +211,16 @@ Create bound loggers per-invocation. Do not cache them at module level.
 
 ## Ecosystem
 
-- [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) — Pre-deploy health gate CLI
-- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — Request and response validation
-- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI and Swagger UI
-- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding
-- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — Recipes and examples
+Part of the **Azure Functions Python DX Toolkit**:
+
+| Package | Role |
+|---------|------|
+| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request and response validation |
+| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec and Swagger UI |
+| **azure-functions-logging** | Structured logging and observability |
+| [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) | Pre-deploy diagnostic CLI |
+| [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) | Project scaffolding |
+| [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
 
 ## Disclaimer
 
