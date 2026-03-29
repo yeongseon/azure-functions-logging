@@ -88,6 +88,7 @@ def test_public_api_exports() -> None:
         "get_logger",
         "inject_context",
         "setup_logging",
+        "with_context",
     }
     assert set(afl.__all__) == expected
     assert callable(afl.get_logger)

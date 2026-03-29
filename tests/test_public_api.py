@@ -16,6 +16,7 @@ class TestAPISurface:
             "get_logger",
             "inject_context",
             "setup_logging",
+            "with_context",
         }
 
     def test_version_is_0_4_0(self) -> None:

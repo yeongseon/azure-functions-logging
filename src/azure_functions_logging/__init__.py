@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ._context import inject_context
+from ._decorator import with_context
 from ._filters import RedactionFilter, SamplingFilter
 from ._json_formatter import JsonFormatter
 from ._logger import FunctionLogger
@@ -17,6 +18,7 @@ __all__ = [
     "get_logger",
     "inject_context",
     "setup_logging",
+    "with_context",
 ]
 
 __version__ = "0.4.0"
