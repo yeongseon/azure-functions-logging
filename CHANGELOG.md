@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-03-29
+
+### Added
+
+- Runtime contract tests for observable behavior (#28)
+
+### Docs
+
+- Add missing `exception` field to README JSON example (#25)
+- Update README with Azure Functions Python DX Toolkit branding
+
+### Internal
+
+- Dependency updates: ruff 0.15.8, github/codeql-action 4.35.1, codecov/codecov-action 6.0.0, anchore/sbom-action 0.24.0
+- Rename publish environment from production to release
+- Unify CI/CD workflow configurations
+
 ## [0.4.0] - 2026-03-21
 
 ### Added
