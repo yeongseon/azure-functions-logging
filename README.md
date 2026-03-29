@@ -108,7 +108,8 @@ Output per log line (NDJSON — one JSON object per line):
 ```json
 {"timestamp": "2024-01-15T10:30:00Z", "level": "INFO", "logger": "my_module",
  "message": "order accepted", "invocation_id": "abc-123", "function_name": "OrderHandler",
- "cold_start": false, "trace_id": "00-abc...", "extra": {"order_id": "o-999"}}
+ "cold_start": false, "trace_id": "00-abc...", "exception": null,
+ "extra": {"order_id": "o-999"}}
 ```
 
 Extra fields appear in `extra` and are indexable in Application Insights:
