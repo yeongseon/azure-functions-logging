@@ -95,6 +95,38 @@ def my_function(req, context):
 
 Without `inject_context()`, these fields are `None` in every log line.
 
+### `with_context` Decorator
+
+For less boilerplate, use the `with_context` decorator instead of calling `inject_context()` manually:
+
+```python
+import azure.functions as func
+from azure_functions_logging import get_logger, setup_logging, with_context
+
+setup_logging()
+logger = get_logger(__name__)
+
+app = func.FunctionApp()
+
+@app.route(route="hello")
+@with_context
+def hello(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    logger.info("Request received")
+    return func.HttpResponse("OK")
+```
+
+The decorator finds the `context` parameter by name, calls `inject_context()` before your handler runs, and resets context variables in `finally` after it returns.
+
+Custom parameter name:
+
+```python
+@with_context(param="ctx")
+def hello(req: func.HttpRequest, ctx: func.Context) -> func.HttpResponse:
+    ...
+```
+
+Both sync and async handlers are supported.
+
 ## Structured JSON Output (Production)
 
 Use JSON format when logs feed Application Insights or any aggregation system:

@@ -1,0 +1,266 @@
+"""Tests for the ``with_context`` decorator.
+
+Covers:
+- @with_context (no parens) with default ``context`` param name
+- @with_context(param="ctx") with custom param name
+- Async handler support
+- Context reset in ``finally`` (context vars are None after handler returns)
+- Context found in kwargs vs positional args
+- Context param not found → no crash (Principle 3)
+- Decorator preserves function metadata (functools.wraps)
+
+Ref: https://github.com/yeongseon/azure-functions-logging/issues/22
+"""
+
+from __future__ import annotations
+
+import asyncio
+from types import SimpleNamespace
+
+import pytest
+
+from azure_functions_logging import with_context
+import azure_functions_logging._context as ctx_mod
+from azure_functions_logging._context import (
+    cold_start_var,
+    function_name_var,
+    invocation_id_var,
+    trace_id_var,
+)
+import azure_functions_logging._setup as setup_mod
+
+
+@pytest.fixture(autouse=True)
+def _reset_state() -> None:
+    """Reset global state between tests."""
+    setup_mod._setup_done = False
+    ctx_mod._cold_start = True
+    invocation_id_var.set(None)
+    function_name_var.set(None)
+    trace_id_var.set(None)
+    cold_start_var.set(None)
+
+
+_MOCK_CONTEXT = SimpleNamespace(
+    invocation_id="inv-dec",
+    function_name="fn-dec",
+    trace_context=SimpleNamespace(
+        trace_parent="00-aaaabbbbccccddddeeeeffffaaaabbbb-1111222233334444-01"
+    ),
+)
+
+
+# ---------------------------------------------------------------------------
+# 1. Sync: @with_context (no parentheses)
+# ---------------------------------------------------------------------------
+
+
+class TestSyncNoParens:
+    """@with_context applied directly — default param name 'context'."""
+
+    def test_injects_context_from_positional_arg(self) -> None:
+        @with_context
+        def handler(req: object, context: object) -> str:
+            assert invocation_id_var.get() == "inv-dec"
+            assert function_name_var.get() == "fn-dec"
+            return "ok"
+
+        result = handler("req", _MOCK_CONTEXT)
+        assert result == "ok"
+
+    def test_injects_context_from_kwarg(self) -> None:
+        @with_context
+        def handler(req: object, context: object) -> str:
+            assert invocation_id_var.get() == "inv-dec"
+            return "ok"
+
+        result = handler("req", context=_MOCK_CONTEXT)
+        assert result == "ok"
+
+    def test_resets_context_vars_after_return(self) -> None:
+        @with_context
+        def handler(req: object, context: object) -> str:
+            return "ok"
+
+        handler("req", _MOCK_CONTEXT)
+        assert invocation_id_var.get() is None
+        assert function_name_var.get() is None
+        assert trace_id_var.get() is None
+        assert cold_start_var.get() is None
+
+    def test_resets_context_vars_after_exception(self) -> None:
+        @with_context
+        def handler(req: object, context: object) -> str:
+            raise ValueError("boom")
+
+        with pytest.raises(ValueError, match="boom"):
+            handler("req", _MOCK_CONTEXT)
+
+        assert invocation_id_var.get() is None
+        assert function_name_var.get() is None
+        assert trace_id_var.get() is None
+        assert cold_start_var.get() is None
+
+
+# ---------------------------------------------------------------------------
+# 2. Sync: @with_context(param="ctx")
+# ---------------------------------------------------------------------------
+
+
+class TestSyncCustomParam:
+    """@with_context(param='ctx') — custom parameter name."""
+
+    def test_injects_context_with_custom_param_name(self) -> None:
+        @with_context(param="ctx")
+        def handler(req: object, ctx: object) -> str:
+            assert invocation_id_var.get() == "inv-dec"
+            assert function_name_var.get() == "fn-dec"
+            return "ok"
+
+        result = handler("req", _MOCK_CONTEXT)
+        assert result == "ok"
+
+    def test_custom_param_kwarg(self) -> None:
+        @with_context(param="ctx")
+        def handler(req: object, ctx: object) -> str:
+            assert invocation_id_var.get() == "inv-dec"
+            return "ok"
+
+        result = handler("req", ctx=_MOCK_CONTEXT)
+        assert result == "ok"
+
+
+# ---------------------------------------------------------------------------
+# 3. Async handlers
+# ---------------------------------------------------------------------------
+
+
+class TestAsync:
+    """with_context must support async handlers."""
+
+    def test_async_handler_injects_and_resets(self) -> None:
+        @with_context
+        async def handler(req: object, context: object) -> str:
+            assert invocation_id_var.get() == "inv-dec"
+            return "ok"
+
+        result = asyncio.get_event_loop().run_until_complete(
+            handler("req", _MOCK_CONTEXT)
+        )
+        assert result == "ok"
+        # Context reset after return
+        assert invocation_id_var.get() is None
+
+    def test_async_handler_resets_on_exception(self) -> None:
+        @with_context
+        async def handler(req: object, context: object) -> str:
+            raise ValueError("async boom")
+
+        with pytest.raises(ValueError, match="async boom"):
+            asyncio.get_event_loop().run_until_complete(
+                handler("req", _MOCK_CONTEXT)
+            )
+
+        assert invocation_id_var.get() is None
+
+    def test_async_custom_param(self) -> None:
+        @with_context(param="ctx")
+        async def handler(req: object, ctx: object) -> str:
+            assert function_name_var.get() == "fn-dec"
+            return "ok"
+
+        result = asyncio.get_event_loop().run_until_complete(
+            handler("req", _MOCK_CONTEXT)
+        )
+        assert result == "ok"
+
+
+# ---------------------------------------------------------------------------
+# 4. Context param not found → no crash (Principle 3)
+# ---------------------------------------------------------------------------
+
+
+class TestMissingContextParam:
+    """When the handler doesn't have the expected context param,
+    the decorator must not crash — just skip injection.
+    """
+
+    def test_no_context_param_does_not_crash(self) -> None:
+        @with_context
+        def handler(req: object) -> str:
+            # No context injected — vars stay None
+            assert invocation_id_var.get() is None
+            return "ok"
+
+        result = handler("req")
+        assert result == "ok"
+
+    def test_wrong_param_name_does_not_crash(self) -> None:
+        @with_context(param="ctx")
+        def handler(req: object, context: object) -> str:
+            # 'ctx' not in signature → no injection
+            assert invocation_id_var.get() is None
+            return "ok"
+
+        result = handler("req", _MOCK_CONTEXT)
+        assert result == "ok"
+
+
+# ---------------------------------------------------------------------------
+# 5. Decorator preserves function metadata
+# ---------------------------------------------------------------------------
+
+
+class TestFunctools:
+    """with_context must preserve __name__, __doc__, __module__ via functools.wraps."""
+
+    def test_preserves_name_and_doc(self) -> None:
+        @with_context
+        def my_handler(req: object, context: object) -> str:
+            """Handler docstring."""
+            return "ok"
+
+        assert my_handler.__name__ == "my_handler"
+        assert my_handler.__doc__ == "Handler docstring."
+
+    def test_preserves_name_with_parens(self) -> None:
+        @with_context(param="context")
+        def another_handler(req: object, context: object) -> str:
+            """Another docstring."""
+            return "ok"
+
+        assert another_handler.__name__ == "another_handler"
+        assert another_handler.__doc__ == "Another docstring."
+
+
+# ---------------------------------------------------------------------------
+# 6. Cold start detection through decorator
+# ---------------------------------------------------------------------------
+
+
+class TestColdStart:
+    """The decorator must correctly propagate cold_start via inject_context."""
+
+    def test_first_invocation_is_cold_start(self) -> None:
+        @with_context
+        def handler(req: object, context: object) -> bool | None:
+            return cold_start_var.get()
+
+        result = handler("req", _MOCK_CONTEXT)
+        assert result is True
+
+    def test_second_invocation_is_not_cold_start(self) -> None:
+        @with_context
+        def handler(req: object, context: object) -> bool | None:
+            return cold_start_var.get()
+
+        handler("req", _MOCK_CONTEXT)
+        # Reset _cold_start is already False, but contextvars are reset by decorator
+        # Need fresh context for second call
+        ctx2 = SimpleNamespace(
+            invocation_id="inv-2",
+            function_name="fn-2",
+            trace_context=SimpleNamespace(trace_parent="00-bbbb-2222-01"),
+        )
+        result = handler("req", ctx2)
+        assert result is False
