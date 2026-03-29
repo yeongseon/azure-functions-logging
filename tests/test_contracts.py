@@ -308,7 +308,9 @@ class TestDuplicateOutputPrevention:
         with patch.dict(os.environ, {}, clear=True):
             setup_logging(logger_name=name, format="json")
 
-        target.handlers[0].setStream(stream)
+        handler = target.handlers[0]
+        assert isinstance(handler, logging.StreamHandler)
+        handler.setStream(stream)
 
         fl = get_logger(name)
         fl.info("single-line-test")
