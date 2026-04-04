@@ -172,10 +172,7 @@ class RedactionFilter(logging.Filter):
             if key.lower() in self._sensitive_keys:
                 setattr(record, key, _MASK)
             else:
-                try:
-                    value = getattr(record, key)
-                except Exception:
-                    continue
+                value = record.__dict__[key]
                 if isinstance(value, (dict, list)):
                     setattr(record, key, _redact_value(value, self._sensitive_keys))
         return True

@@ -237,6 +237,6 @@ def test_redaction_filter_skips_attributes_that_raise_on_access() -> None:
     setattr(record, "payload", {"token": "abc", "safe": "ok"})
 
     assert flt.filter(record) is True
-    assert record.__dict__["explode"] == {"token": "abc"}
+    assert record.__dict__["explode"] == {"token": "***"}
     assert getattr(record, "password") == "***"
     assert getattr(record, "payload") == {"token": "***", "safe": "ok"}
