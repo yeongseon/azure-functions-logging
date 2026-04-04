@@ -212,3 +212,31 @@ def test_redaction_filter_recursively_masks_mixed_nested_structures() -> None:
         ],
         "profile": {"passwd": "***", "name": "alice"},
     }
+
+
+def test_redaction_filter_skips_attributes_that_raise_on_access() -> None:
+    class ExplodingRecord(logging.LogRecord):
+        def __getattribute__(self, name: str) -> object:
+            if name == "explode":
+                msg = "attribute access failure"
+                raise RuntimeError(msg)
+            return super().__getattribute__(name)
+
+    flt = RedactionFilter()
+    record = ExplodingRecord(
+        name="test.logger",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="exploding",
+        args=(),
+        exc_info=None,
+    )
+    setattr(record, "explode", {"token": "abc"})
+    setattr(record, "password", "s3cr3t")
+    setattr(record, "payload", {"token": "abc", "safe": "ok"})
+
+    assert flt.filter(record) is True
+    assert record.__dict__["explode"] == {"token": "***"}
+    assert getattr(record, "password") == "***"
+    assert getattr(record, "payload") == {"token": "***", "safe": "ok"}
