@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 
 from ._context import ContextFilter
 from ._formatter import ColorFormatter
@@ -12,6 +13,7 @@ from ._json_formatter import JsonFormatter
 
 # Track configured logger names to ensure per-logger idempotency
 _configured_loggers: set[str | None] = set()
+_configured_lock = threading.Lock()
 
 
 def _is_functions_environment() -> bool:
@@ -61,37 +63,39 @@ def setup_logging(
         msg = "format must be 'color' or 'json'"
         raise ValueError(msg)
 
-    if logger_name in _configured_loggers:
-        return
-    _configured_loggers.add(logger_name)
+    with _configured_lock:
+        if logger_name in _configured_loggers:
+            return
 
-    context_filter = ContextFilter()
-    is_functions_env = _is_functions_environment()
+        context_filter = ContextFilter()
+        is_functions_env = _is_functions_environment()
 
-    if is_functions_env:
-        # Azure or Core Tools: install filter only, don't touch handlers/level
-        root = logging.getLogger()
-        for handler in root.handlers:
-            if functions_formatter is not None:
-                handler.setFormatter(functions_formatter)
-            handler.addFilter(context_filter)
-        # Also install on any future handlers via the logger itself
-        root.addFilter(context_filter)
-    else:
-        # Standalone local development
-        target = logging.getLogger(logger_name)
-        target.setLevel(level)
-
-        # Add colored handler only if no handlers exist
-        if not target.handlers:
-            handler = logging.StreamHandler()
-            handler.setFormatter(ColorFormatter() if format == "color" else JsonFormatter())
-            handler.addFilter(context_filter)
-            target.addHandler(handler)
-        else:
-            # Add filter to existing handlers
-            for handler in target.handlers:
+        if is_functions_env:
+            # Azure or Core Tools: install filter only, don't touch handlers/level
+            root = logging.getLogger()
+            for handler in root.handlers:
+                if functions_formatter is not None:
+                    handler.setFormatter(functions_formatter)
                 handler.addFilter(context_filter)
+            # Also install on any future handlers via the logger itself
+            root.addFilter(context_filter)
+        else:
+            # Standalone local development
+            target = logging.getLogger(logger_name)
+            target.setLevel(level)
 
-    if is_functions_env:
-        warn_host_json_level_conflict(level)
+            # Add colored handler only if no handlers exist
+            if not target.handlers:
+                handler = logging.StreamHandler()
+                handler.setFormatter(ColorFormatter() if format == "color" else JsonFormatter())
+                handler.addFilter(context_filter)
+                target.addHandler(handler)
+            else:
+                # Add filter to existing handlers
+                for handler in target.handlers:
+                    handler.addFilter(context_filter)
+
+        if is_functions_env:
+            warn_host_json_level_conflict(level)
+
+        _configured_loggers.add(logger_name)
