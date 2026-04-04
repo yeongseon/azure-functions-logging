@@ -46,7 +46,7 @@ import azure_functions_logging._setup as setup_mod
 @pytest.fixture(autouse=True)
 def _reset_state() -> None:
     """Reset global state between tests."""
-    setup_mod._setup_done = False
+    setup_mod._configured_loggers.clear()
     ctx_mod._cold_start = True
     invocation_id_var.set(None)
     function_name_var.set(None)

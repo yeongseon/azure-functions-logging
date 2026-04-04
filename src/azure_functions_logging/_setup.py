@@ -10,8 +10,8 @@ from ._formatter import ColorFormatter
 from ._host_config import warn_host_json_level_conflict
 from ._json_formatter import JsonFormatter
 
-# Track whether setup has been called to ensure idempotency
-_setup_done: bool = False
+# Track configured logger names to ensure per-logger idempotency
+_configured_loggers: set[str | None] = set()
 
 
 def _is_functions_environment() -> bool:
@@ -42,8 +42,8 @@ def setup_logging(
       ``ColorFormatter`` or ``JsonFormatter`` to the specified logger
       (or root logger if ``logger_name`` is None). Sets the level.
 
-    This function is idempotent — calling it multiple times has no additional
-    effect.
+    This function is idempotent per ``logger_name`` — calling it multiple times
+    for the same logger has no additional effect.
 
     Args:
         level: Logging level for local development. Ignored in Azure/Core Tools.
@@ -57,14 +57,13 @@ def setup_logging(
             injecting a custom JSON formatter or third-party formatter
             without losing ContextFilter integration.
     """
-    global _setup_done
     if format not in {"color", "json"}:
         msg = "format must be 'color' or 'json'"
         raise ValueError(msg)
 
-    if _setup_done:
+    if logger_name in _configured_loggers:
         return
-    _setup_done = True
+    _configured_loggers.add(logger_name)
 
     context_filter = ContextFilter()
     is_functions_env = _is_functions_environment()
