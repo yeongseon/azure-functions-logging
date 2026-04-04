@@ -18,7 +18,7 @@ from azure_functions_logging._setup import (
 
 @pytest.fixture(autouse=True)
 def reset_setup_state() -> None:
-    setup_mod._setup_done = False
+    setup_mod._configured_loggers.clear()
 
 
 def test_setup_logging_local_dev_adds_handler_with_color_formatter() -> None:
@@ -71,6 +71,28 @@ def test_setup_logging_is_idempotent() -> None:
     logger.handlers.clear()
     logger.filters.clear()
 
+
+def test_setup_logging_is_idempotent_per_logger_name() -> None:
+    first_name = "afl.test.idempotent.first"
+    second_name = "afl.test.idempotent.second"
+    first = logging.getLogger(first_name)
+    second = logging.getLogger(second_name)
+    first.handlers.clear()
+    first.filters.clear()
+    second.handlers.clear()
+    second.filters.clear()
+
+    with patch.dict(os.environ, {}, clear=True):
+        setup_logging(logger_name=first_name)
+        setup_logging(logger_name=second_name)
+
+    assert len(first.handlers) == 1
+    assert len(second.handlers) == 1
+
+    first.handlers.clear()
+    first.filters.clear()
+    second.handlers.clear()
+    second.filters.clear()
 
 def test_is_functions_environment() -> None:
     with patch.dict(os.environ, {}, clear=True):

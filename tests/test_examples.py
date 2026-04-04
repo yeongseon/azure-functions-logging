@@ -34,7 +34,7 @@ def _load_example(name: str) -> Any:
 @pytest.fixture(autouse=True)
 def _reset_logging_state() -> None:
     """Reset global state so each test starts fresh."""
-    setup_mod._setup_done = False
+    setup_mod._configured_loggers.clear()
     ctx_mod._cold_start = True
 
     # Clear handlers/filters added by previous tests on root + named loggers
