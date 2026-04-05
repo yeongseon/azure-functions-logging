@@ -48,7 +48,7 @@ Everything else remains internal to keep migration and evolution manageable. (`_
 Behavior summary:
 
 1. Validate input (`format` must be `color` or `json`).
-2. Enforce idempotency (first call wins).
+2. Enforce idempotency (per `logger_name` — repeated calls are no-ops).
 3. Build `ContextFilter`.
 4. Detect runtime environment.
 5. Apply local or runtime-safe setup strategy.
@@ -56,15 +56,10 @@ Behavior summary:
 
 ## Environment Detection Strategy
 
-Detection uses runtime environment variables:
+Detection checks the `FUNCTIONS_WORKER_RUNTIME` environment variable to branch between local and runtime-safe paths:
 
-- Functions presence: `FUNCTIONS_WORKER_RUNTIME`
-- Azure hosted signal: `WEBSITE_INSTANCE_ID`
-
-Why this matters:
-
-- Local standalone Python needs handler setup.
-- Azure/Core Tools generally already provide host-managed handlers.
+- Present → Azure Functions / Core Tools runtime (host-managed handlers).
+- Absent → local standalone Python (needs handler setup).
 
 ## Runtime-Safe Behavior in Azure/Core Tools
 
@@ -85,7 +80,7 @@ In non-Functions environments:
 
 - Target logger level is set.
 - `StreamHandler` is created only when the target logger has no existing handlers.
-- Formatter is selected by `format` parameter.
+- Formatter is selected by `format` parameter when a new handler is created.
 - `ContextFilter` is attached for metadata fields.
 
 This gives deterministic local behavior with minimal code.
@@ -207,6 +202,32 @@ For production teams, this architecture means:
 - Context correlation is easy with a single injection call.
 - Local and runtime behavior differ intentionally to match platform constraints.
 - Cold start analysis becomes available without custom plumbing.
+
+## Key Design Decisions
+
+### 1. Environment-driven setup strategy
+
+`FUNCTIONS_WORKER_RUNTIME` is the branch variable that determines whether setup runs the Azure/Core Tools path or the local standalone path. `WEBSITE_INSTANCE_ID` is available as a helper signal but is not used in the primary branching logic.
+
+### 2. Idempotent configuration per logger name
+
+`setup_logging()` tracks configured logger names in an internal `_configured_loggers` set. Repeated calls for the same `logger_name` are no-ops. Different logger names each get their own setup pass.
+
+### 3. contextvars for invocation metadata
+
+Invocation-scoped metadata (`invocation_id`, `function_name`, `trace_id`, `cold_start`) is stored in `contextvars` rather than thread-locals or logger attributes. This provides automatic async-task isolation and avoids polluting the global logger namespace.
+
+### 4. Wrapper over logger subclass
+
+`FunctionLogger` wraps a standard `logging.Logger` instance rather than subclassing `logging.Logger` or replacing the logger class globally. This avoids side effects in third-party libraries and allows incremental adoption.
+
+### 5. Process-scoped cold start flag
+
+Cold start detection uses a module-level boolean that starts `True` and flips to `False` after the first `inject_context()` call. This maps directly to the Azure Functions worker process lifecycle without requiring external state.
+
+### 6. Filter-based context enrichment
+
+`ContextFilter` copies context variable values onto each `LogRecord` during the filter phase, before the formatter runs. This keeps the enrichment mechanism orthogonal to formatter choice — the same filter works with both `ColorFormatter` and `JsonFormatter`.
 
 ## Module Boundaries
 
