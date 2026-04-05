@@ -1,6 +1,7 @@
 site_name: Azure Functions Logging
 site_description: Developer-friendly logging helpers for Azure Functions Python
 site_author: Yeongseon Choe
+site_url: https://yeongseon.github.io/azure-functions-logging/
 repo_url: https://github.com/yeongseon/azure-functions-logging
 edit_uri: edit/main/docs/
 
@@ -46,7 +47,11 @@ markdown_extensions:
       permalink: true
       toc_depth: 3
   - tables
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.tabbed:
@@ -73,3 +78,6 @@ extra:
       link: https://github.com/yeongseon/azure-functions-logging
   copyright: |
     © 2026 Yeongseon Choe – MIT Licensed
+
+extra_javascript:
+  - https://unpkg.com/mermaid@11.14.0/dist/mermaid.min.js
