@@ -26,7 +26,7 @@ This project does not aim to:
 
 ## Design Principles
 
-- **Principle 1**: The root logger is never modified. All configuration targets named child loggers.
+- **Principle 1**: The root logger's handlers and level are never modified. In Azure environments, only a `ContextFilter` is installed on existing handlers and the root logger (for future handler coverage).
 - **Principle 2**: In Azure environments, behavior is safe by default — no forced colors, no excessive handler additions, no interference with the worker's `AsyncLoggingHandler`.
 - **Principle 3**: Context injection failures never cause application failures. Logging helpers are auxiliary — they must never become a source of outages.
 - **Principle 4**: The API surface stays as close to standard `logging` as possible. Users should not need to learn a new logging framework.
@@ -37,26 +37,20 @@ This project does not aim to:
 
 The architecture uses Python's `contextvars` as the primary context propagation mechanism, with a `logging.Filter` that copies context variable values onto every `LogRecord`.
 
-```
-┌─────────────────────────────────────────────────────┐
-│  inject_context(func_context)                       │
-│  Sets contextvars: invocation_id, function_name,    │
-│  trace_id, cold_start                               │
-└──────────────────────┬──────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  ContextFilter (logging.Filter)                     │
-│  Copies contextvars → LogRecord attributes          │
-│  Covers ALL loggers (including third-party)         │
-└──────────────────────┬──────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  Formatter reads record.invocation_id, etc.         │
-│  Local: ColorFormatter with context fields          │
-│  Azure: Worker's handler uses formatted message     │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Startup ["Startup / Configuration"]
+        SL["setup_logging()"] --> ENV{Environment?}
+        ENV -->|Azure / Core Tools| AZ["Install ContextFilter\non root handlers + root logger"]
+        ENV -->|Standalone local| LOCAL["Add StreamHandler +\nColorFormatter or JsonFormatter\n(only if no handlers exist)"]
+        AZ --> HOST["warn_host_json_level_conflict()"]
+    end
+
+    subgraph Invocation ["Per-Invocation / Log Enrichment"]
+        CTX["inject_context(context)\nor @with_context decorator"] --> VARS["contextvars\ninvocation_id, function_name,\ntrace_id, cold_start"]
+        VARS --> FILT["ContextFilter\ncopies vars → LogRecord"]
+        FILT --> FMT["Formatter reads\nrecord attributes"]
+    end
 ```
 
 ### Why `contextvars` + Filter (not `extra={}` per call)
@@ -109,7 +103,7 @@ Four exports plus a logger class:
 - `WEBSITE_INSTANCE_ID` → "Azure hosted" (not present locally)
 - Absence of both → "standalone local development"
 
-`setup_logging()` adds a `StreamHandler` with `ColorFormatter` only in standalone local development. In Functions environments, it installs only the `ContextFilter` (no handlers, no formatters on the worker's handler).
+`setup_logging()` adds a `StreamHandler` with `ColorFormatter` only in standalone local development when the target logger has no existing handlers. In Functions environments, it installs only the `ContextFilter` on existing root handlers and the root logger itself; when `functions_formatter` is passed, it also sets that formatter on each existing handler.
 
 ### Cold Start Detection
 
@@ -174,3 +168,19 @@ bound.info("Processing")  # includes user_id + operation + invocation_id (from f
 - Context injection semantics must be covered by regression tests
 - Formatter output changes are user-facing behavior changes
 - Experimental APIs must be clearly labeled in code and docs
+
+
+## Sources
+
+- [Azure Functions Python developer reference](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python)
+- [Monitor Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-monitoring)
+- [host.json logging configuration](https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json#logging)
+- [Supported languages in Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/supported-languages)
+
+## See Also
+
+- [azure-functions-validation — Architecture](https://github.com/yeongseon/azure-functions-validation) — Request/response validation pipeline
+- [azure-functions-openapi — Architecture](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI spec generation
+- [azure-functions-doctor — Architecture](https://github.com/yeongseon/azure-functions-doctor) — Pre-deploy diagnostic CLI
+- [azure-functions-scaffold — Architecture](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding CLI
+- [azure-functions-langgraph — Architecture](https://github.com/yeongseon/azure-functions-langgraph) — LangGraph agent deployment
