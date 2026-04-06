@@ -50,6 +50,14 @@ Azure Functions Python logging has specific failure modes that generic logging l
 
 ![After: structured color output and JSON](docs/assets/demo-after.png)
 
+## What this package does not do
+
+This package does not own:
+
+- **Replacing stdlib logging** — it wraps and enriches Python's standard `logging`, never replaces it
+- **Distributed tracing** — use OpenTelemetry or Application Insights SDK for end-to-end trace correlation
+- **API documentation** — use [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi) for API documentation and spec generation
+
 ## Installation
 
 ```bash
@@ -244,15 +252,19 @@ Create bound loggers per-invocation. Do not cache them at module level.
 
 ## Ecosystem
 
-Part of the **Azure Functions Python DX Toolkit**:
+This package is part of the **Azure Functions Python DX Toolkit**.
+
+**Design principle:** `azure-functions-logging` owns structured logging and invocation-aware observability. It enriches Python's standard `logging` — it does not replace it. Adjacent concerns belong to [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi) (API documentation and spec generation), [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation) (request/response validation and serialization), and [`azure-functions-langgraph`](https://github.com/yeongseon/azure-functions-langgraph) (LangGraph runtime exposure).
 
 | Package | Role |
 |---------|------|
-| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request and response validation |
-| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec and Swagger UI |
+| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request/response validation and serialization |
+| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec generation and Swagger UI |
+| [azure-functions-langgraph](https://github.com/yeongseon/azure-functions-langgraph) | LangGraph deployment adapter for Azure Functions |
 | **azure-functions-logging** | Structured logging and observability |
 | [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) | Pre-deploy diagnostic CLI |
 | [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) | Project scaffolding |
+| [azure-functions-durable-graph](https://github.com/yeongseon/azure-functions-durable-graph) | Manifest-first graph runtime with Durable Functions *(planned)* |
 | [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
 
 ## Disclaimer
