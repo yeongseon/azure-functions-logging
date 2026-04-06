@@ -85,6 +85,38 @@ def hello(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     return func.HttpResponse("OK")
 ```
 
+Start the Functions host locally (using the [e2e example app](examples/e2e_app)):
+
+```bash
+func start
+```
+
+### Verify locally and on Azure
+
+After deploying (see [docs/deployment.md](docs/deployment.md)), the same request produces the same response in both environments.
+
+#### Local
+
+```bash
+curl -s http://localhost:7071/api/logme?correlation_id=demo-123
+```
+
+```json
+{"logged": true, "correlation_id": "demo-123"}
+```
+
+#### Azure
+
+```bash
+curl -s "https://<your-app>.azurewebsites.net/api/logme?correlation_id=demo-123"
+```
+
+```json
+{"logged": true, "correlation_id": "demo-123"}
+```
+
+> Response captured from a deployed Azure Function; URL anonymized.
+
 ## Invocation Context
 
 `inject_context(context)` should be the **first line** of every handler. It binds:
