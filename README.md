@@ -254,7 +254,7 @@ Create bound loggers per-invocation. Do not cache them at module level.
 
 This package is part of the **Azure Functions Python DX Toolkit**.
 
-**Design principle:** `azure-functions-logging` owns structured logging and invocation-aware observability. It enriches Python's standard `logging` — it does not replace it. Runtime behavior for API documentation belongs to [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi), request validation to [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation), and LangGraph runtime exposure to [`azure-functions-langgraph`](https://github.com/yeongseon/azure-functions-langgraph).
+**Design principle:** `azure-functions-logging` owns structured logging and invocation-aware observability. It enriches Python's standard `logging` — it does not replace it. Adjacent concerns belong to [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi) (API documentation and spec generation), [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation) (request/response validation and serialization), and [`azure-functions-langgraph`](https://github.com/yeongseon/azure-functions-langgraph) (LangGraph runtime exposure).
 
 | Package | Role |
 |---------|------|
