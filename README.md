@@ -115,7 +115,7 @@ curl -s "https://<your-app>.azurewebsites.net/api/logme?correlation_id=demo-123"
 {"logged": true, "correlation_id": "demo-123"}
 ```
 
-> Response captured from a deployed Azure Function; URL anonymized.
+> Verified against a temporary Azure Functions deployment in koreacentral (Python 3.12, Consumption plan). Response captured and URL anonymized.
 
 ## Invocation Context
 
