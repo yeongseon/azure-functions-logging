@@ -64,7 +64,7 @@ pip install -r requirements.txt
 
 ## Read these warnings before provisioning
 
-1. Storage account names must be globally unique, lowercase, and 3-24 characters.
+1. Storage account names must be globally unique, lowercase, and 3–24 characters.
 2. Use one region for all resources in this guide to avoid avoidable latency and configuration drift.
 3. Log streaming is a quick runtime check, not full observability; use Application Insights queries for real analysis.
 4. Application Insights ingestion is not always immediate; expect a short delay before traces appear.
