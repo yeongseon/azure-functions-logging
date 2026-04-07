@@ -1,0 +1,445 @@
+# azure-functions-logging — Full LLM Reference
+
+> Structured logging for Azure Functions Python — invocation-aware, Application Insights-ready, zero breaking changes.
+
+## Package Info
+
+- PyPI: `pip install azure-functions-logging`
+- Version: 0.4.1
+- Python: >=3.10, <3.15
+- License: MIT
+- Docs: https://yeongseon.github.io/azure-functions-logging/
+- Repository: https://github.com/yeongseon/azure-functions-logging
+
+## Installation
+
+```bash
+pip install azure-functions-logging
+```
+
+## Public API
+
+### Setup Function
+
+```python
+from azure_functions_logging import setup_logging
+import logging
+
+def setup_logging(
+    *,
+    level: int = logging.INFO,
+    format: str = "color",
+    logger_name: str | None = None,
+    functions_formatter: logging.Formatter | None = None,
+) -> None:
+    """Configure logging for the current environment.
+    
+    Behavior depends on detected environment:
+    - **Azure / Core Tools**: Installs ContextFilter on root logger's handlers only.
+      Does NOT add handlers or modify root logger level (respects host.json).
+    - **Standalone local**: Adds StreamHandler with ColorFormatter or JsonFormatter.
+    
+    This function is idempotent per logger_name.
+    
+    Args:
+        level: Logging level for local dev. Ignored in Azure/Core Tools (default: INFO).
+        format: Log format: "color" (default) or "json". Ignored if functions_formatter provided.
+        logger_name: Optional logger name to configure. None = root logger.
+        functions_formatter: Custom formatter for Azure/Core Tools handlers.
+    
+    Raises:
+        ValueError: If format not in {"color", "json"}.
+    """
+    ...
+```
+
+### Logger Creation
+
+```python
+from azure_functions_logging import get_logger, FunctionLogger
+
+def get_logger(name: str | None = None) -> FunctionLogger:
+    """Create a FunctionLogger wrapping a standard logging.Logger.
+    
+    Args:
+        name: Logger name. Typically __name__. None = root logger.
+    
+    Returns:
+        A FunctionLogger instance.
+    """
+    ...
+
+class FunctionLogger:
+    """Wrapper around logging.Logger with context binding.
+    
+    Delegates all standard logging methods to underlying logger.
+    The bind() method returns new wrapper with merged context.
+    """
+    
+    def __init__(self, logger: logging.Logger) -> None:
+        """Wrap a standard logger."""
+        ...
+    
+    @property
+    def name(self) -> str:
+        """Return underlying logger name."""
+        ...
+    
+    def bind(self, **kwargs: Any) -> FunctionLogger:
+        """Return new FunctionLogger with merged context.
+        
+        Context from bind() is supplementary to global context
+        (invocation_id, function_name, etc.) from inject_context().
+        
+        Args:
+            **kwargs: Context key-value pairs to bind.
+        
+        Returns:
+            New FunctionLogger with merged context.
+        """
+        ...
+    
+    def clear_context(self) -> None:
+        """Clear all bound context fields."""
+        ...
+    
+    # Standard logging methods (all support extra= and context binding):
+    def debug(self, msg: object, *args: Any, **kwargs: Any) -> None:
+        """Log DEBUG message."""
+        ...
+    
+    def info(self, msg: object, *args: Any, **kwargs: Any) -> None:
+        """Log INFO message."""
+        ...
+    
+    def warning(self, msg: object, *args: Any, **kwargs: Any) -> None:
+        """Log WARNING message."""
+        ...
+    
+    def error(self, msg: object, *args: Any, **kwargs: Any) -> None:
+        """Log ERROR message."""
+        ...
+    
+    def critical(self, msg: object, *args: Any, **kwargs: Any) -> None:
+        """Log CRITICAL message."""
+        ...
+    
+    def exception(self, msg: object, *args: Any, **kwargs: Any) -> None:
+        """Log ERROR with exception traceback."""
+        ...
+```
+
+### JSON Formatter
+
+```python
+from azure_functions_logging import JsonFormatter
+import logging
+
+class JsonFormatter(logging.Formatter):
+    """Structured JSON log formatter (NDJSON).
+    
+    Output is newline-delimited JSON (NDJSON), one JSON object per line.
+    Context fields (invocation_id, function_name, etc.) included when present.
+    
+    Example output:
+        {"timestamp": "2024-01-15T10:30:00+00:00", "level": "INFO", 
+         "logger": "my_app", "message": "Request received",
+         "invocation_id": "abc-123", "cold_start": true, 
+         "extra": {"user_id": "123"}}
+    """
+    
+    def __init__(self) -> None:
+        """Initialize JSON formatter (no args)."""
+        ...
+    
+    def format(self, record: logging.LogRecord) -> str:
+        """Format log record as NDJSON string."""
+        ...
+```
+
+### Filters
+
+```python
+from azure_functions_logging import SamplingFilter, RedactionFilter
+import logging
+
+class SamplingFilter(logging.Filter):
+    """Rate-limit logger to emit max rate records per window.
+    
+    Useful for high-frequency loggers (HTTP logs, polling loops).
+    Records at WARNING+ always passed through, regardless of cap.
+    
+    Args:
+        rate: Max records per window (must be >= 1, default: 100).
+        window: Rolling time window in seconds (default: 1.0).
+        name: Logger name filter. Empty string = all (default).
+    
+    Raises:
+        ValueError: If rate < 1 or window <= 0.
+    """
+    
+    def __init__(
+        self,
+        rate: int = 100,
+        window: float = 1.0,
+        name: str = "",
+    ) -> None:
+        ...
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Return True to emit, False to drop (based on rate)."""
+        ...
+
+
+class RedactionFilter(logging.Filter):
+    """Mask PII / sensitive values on LogRecord extra attributes.
+    
+    Mutates record in-place, redacting any non-standard field whose
+    lowercase name is in sensitive_keys. Both ColorFormatter and
+    JsonFormatter see redacted values.
+    
+    Default sensitive keys: password, passwd, token, authorization,
+    secret, api_key, apikey.
+    
+    Args:
+        sensitive_keys: Iterable of lowercase key names to redact.
+                       None = uses default set.
+        name: Logger name filter. Empty string = all (default).
+    """
+    
+    def __init__(
+        self,
+        sensitive_keys: Iterable[str] | None = None,
+        name: str = "",
+    ) -> None:
+        ...
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Redact sensitive fields. Always returns True."""
+        ...
+```
+
+### Context Injection
+
+```python
+from azure_functions_logging import inject_context, with_context
+import azure.functions as func
+
+def inject_context(context: Any) -> None:
+    """Set invocation context from Azure Functions context object.
+    
+    Extracts invocation_id, function_name, trace_id, cold_start
+    and stores in contextvars. Safe to call with any object;
+    missing attributes silently ignored (context failures never
+    cause application failures).
+    
+    Args:
+        context: An Azure Functions context object (func.Context).
+    
+    Example:
+        def handler(req, context):
+            inject_context(context)  # Must be first line
+            logger.info("Processing")  # Includes invocation_id, cold_start
+    """
+    ...
+```
+
+### Context Decorator
+
+```python
+from azure_functions_logging import with_context
+from typing import TypeVar, Callable, Any
+
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+def with_context(
+    func: _F | None = None,
+    *,
+    param: str = "context",
+) -> _F | Callable[[_F], _F]:
+    """Decorator that automatically injects invocation context.
+    
+    Finds the context parameter, calls inject_context() before handler,
+    and resets context variables in finally. Both sync and async supported.
+    
+    Usage without args:
+        @with_context
+        def handler(req, context):
+            logger.info("Automatic context")
+    
+    Usage with custom param name:
+        @with_context(param="ctx")
+        def handler(req, ctx):
+            logger.info("Still automatic")
+    
+    Args:
+        func: Handler function (when used without parentheses).
+        param: Context parameter name (default: "context").
+    
+    Returns:
+        Decorated function with auto context injection.
+    """
+    ...
+```
+
+### Contextvar Helpers (Advanced)
+
+```python
+from azure_functions_logging._context import (
+    invocation_id_var,
+    function_name_var,
+    trace_id_var,
+    cold_start_var,
+    ContextFilter,
+)
+import contextvars
+
+# Context variables available for direct access in advanced scenarios:
+invocation_id_var: contextvars.ContextVar[str | None]
+function_name_var: contextvars.ContextVar[str | None]
+trace_id_var: contextvars.ContextVar[str | None]
+cold_start_var: contextvars.ContextVar[bool | None]
+
+class ContextFilter(logging.Filter):
+    """Logging filter copying contextvars onto LogRecord attributes.
+    
+    Installed on handlers (not loggers) to cover ALL loggers
+    including third-party libraries.
+    """
+    
+    CONTEXT_FIELDS: tuple[str, ...] = (
+        "invocation_id",
+        "function_name",
+        "trace_id",
+        "cold_start",
+    )
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Add context fields to log record. Always returns True."""
+        ...
+```
+
+## Design Principles
+
+1. **Root logger is never modified** — Only filters/formatters installed on handlers
+2. **Respects host.json** — In Azure/Core Tools, never changes root logger level
+3. **No runtime dependency on azure-functions** — Works with any context-like object
+4. **Silent on context failures** — Missing attributes don't cause exceptions
+5. **Idempotent setup** — Calling setup_logging() multiple times is safe
+6. **Standard logging delegates** — FunctionLogger wraps, never replaces stdlib logging
+
+## Common Patterns
+
+### Basic setup with local color output:
+
+```python
+from azure_functions_logging import setup_logging, get_logger
+
+setup_logging()  # Color in local, filter in Azure
+logger = get_logger(__name__)
+```
+
+### JSON output everywhere:
+
+```python
+from azure_functions_logging import setup_logging, get_logger, JsonFormatter
+
+setup_logging(format="json")
+logger = get_logger(__name__)
+```
+
+### Filtered third-party logging:
+
+```python
+from azure_functions_logging import setup_logging, SamplingFilter, RedactionFilter
+import logging
+
+setup_logging()
+
+# Rate-limit urllib3 logs
+urllib3_logger = logging.getLogger("urllib3")
+handler = logging.StreamHandler()
+handler.addFilter(SamplingFilter(rate=10, window=1.0))
+urllib3_logger.addHandler(handler)
+
+# Redact passwords from custom field
+custom_logger = get_logger("myapp.auth")
+handler = logging.StreamHandler()
+handler.addFilter(RedactionFilter())
+custom_logger.addHandler(handler)
+```
+
+### Per-request context with bind():
+
+```python
+from azure_functions_logging import get_logger, inject_context
+
+logger = get_logger(__name__)
+
+def handler(req, context):
+    inject_context(context)
+    
+    # Create request-scoped logger with user_id
+    req_logger = logger.bind(user_id=req.params.get("user_id"))
+    req_logger.info("Processing request")
+    # Log includes: invocation_id, user_id, cold_start, etc.
+```
+
+### Async handler with decorator:
+
+```python
+import azure.functions as func
+from azure_functions_logging import with_context, get_logger, setup_logging
+
+setup_logging()
+logger = get_logger(__name__)
+app = func.FunctionApp()
+
+@app.route(route="async_hello")
+@with_context
+async def async_hello(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    logger.info("Async handler with automatic context")
+    return func.HttpResponse("OK")
+```
+
+## Integration with Application Insights
+
+Configure Application Insights in host.json to capture structured logs:
+
+```json
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "maxTelemetryItemsPerSecond": 20
+      }
+    }
+  }
+}
+```
+
+Log records with invocation_id, function_name, and custom fields are automatically
+captured by Application Insights. Use Analytics to query:
+
+```
+traces
+| where customDimensions.invocation_id == "my-invocation"
+| project timestamp, message, customDimensions
+```
+
+## Troubleshooting
+
+**Q: Why aren't my logs appearing in Azure?**
+- Check host.json logging level. This library respects host.json.
+- Ensure setup_logging() is called in function init or first handler.
+
+**Q: How do I get JSON output locally?**
+- Use `setup_logging(format="json")` instead of default color format.
+
+**Q: Can I use custom formatters?**
+- Yes, pass `functions_formatter=MyFormatter()` to setup_logging().
+
+**Q: Does this work without azure-functions?**
+- Yes, pass any object with invocation_id, function_name attributes to inject_context().
