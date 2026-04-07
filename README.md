@@ -299,7 +299,51 @@ This package is part of the **Azure Functions Python DX Toolkit**.
 | [azure-functions-durable-graph](https://github.com/yeongseon/azure-functions-durable-graph) | Manifest-first graph runtime with Durable Functions *(planned)* |
 | [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
 
-## Disclaimer
+
+## For AI Coding Assistants
+
+This package provides structured logging for Azure Functions with zero modifications to stdlib logging.
+
+**LLM-Friendly Resources:**
+- `llms.txt` — Concise API reference and quick start (repo root)
+- `llms-full.txt` — Complete API signatures, patterns, and design principles (repo root)
+
+**Key Implementation Details for Code Generation:**
+
+1. **Never modify root logger** — Only install filters/formatters on handlers
+2. **Context injection is contextvar-based** — Not thread-local, works with asyncio
+3. **Idempotent setup** — Calling setup_logging() multiple times is safe
+4. **Two environments, two behaviors**:
+   - Azure/Core Tools: Only install filters on existing root handlers (respects host.json)
+   - Local dev: Add ColorFormatter or JsonFormatter handler to specified logger
+5. **Test-friendly**:
+   - `inject_context()` accepts any object (no hard dependency on azure.functions.Context)
+   - `with_context` decorator works with sync and async handlers
+   - Use `context.reset_context_vars()` in test teardown if needed
+
+**When generating code:**
+- Import only from `azure_functions_logging` public API (no underscores)
+- Call `setup_logging()` at module level or handler startup (not per-request)
+- Call `inject_context(context)` as first line of handler
+- Use `logger.bind(key=value)` for per-request fields (not direct logger.extra)
+- Apply `RedactionFilter` for PII fields, `SamplingFilter` for high-volume logs
+
+**Example Pattern:**
+```python
+from azure_functions_logging import setup_logging, get_logger, inject_context
+
+# Module level
+setup_logging()
+logger = get_logger(__name__)
+
+# Per handler
+def my_function(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    inject_context(context)
+    req_logger = logger.bind(correlation_id=req.params.get("id"))
+    req_logger.info("Processing")
+    return func.HttpResponse("OK")
+```
+
 
 This project is an independent community project and is not affiliated with,
 endorsed by, or maintained by Microsoft.
