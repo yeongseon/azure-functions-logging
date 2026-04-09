@@ -25,6 +25,19 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 _DEFAULT_PARAM = "context"
 
+_TOOLKIT_META_ATTR = "_azure_functions_toolkit_metadata"
+
+
+def _merge_toolkit_metadata(
+    fn: Callable[..., Any], namespace: str, payload: dict[str, Any],
+) -> None:
+    """Merge toolkit metadata into the convention attribute, preserving other namespaces."""
+    existing: dict[str, Any] = getattr(fn, _TOOLKIT_META_ATTR, {})
+    if not isinstance(existing, dict):
+        existing = {}
+    existing = {**existing, namespace: payload}
+    setattr(fn, _TOOLKIT_META_ATTR, existing)
+
 
 def _reset_context_vars() -> None:
     """Reset all invocation context variables to None."""
@@ -71,6 +84,7 @@ def _wrap_sync(func: _F, param: str) -> _F:
         finally:
             _reset_context_vars()
 
+    _merge_toolkit_metadata(wrapper, "logging", {"version": 1, "context_param": param})
     return wrapper  # type: ignore[return-value]
 
 
@@ -87,6 +101,7 @@ def _wrap_async(func: _F, param: str) -> _F:
         finally:
             _reset_context_vars()
 
+    _merge_toolkit_metadata(wrapper, "logging", {"version": 1, "context_param": param})
     return wrapper  # type: ignore[return-value]
 
 
@@ -140,3 +155,17 @@ def with_context(
 
     # Called as @with_context(...) (with parentheses)
     return decorator
+
+
+
+def get_logging_metadata(func: Any) -> dict[str, Any] | None:
+    """Return logging metadata if the function was decorated with ``with_context``.
+
+    Returns ``None`` if the function has no logging metadata attached.
+    """
+    toolkit_meta = getattr(func, _TOOLKIT_META_ATTR, None)
+    if isinstance(toolkit_meta, dict):
+        meta = toolkit_meta.get("logging")
+        if isinstance(meta, dict):
+            return meta
+    return None

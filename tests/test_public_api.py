@@ -13,6 +13,7 @@ class TestAPISurface:
             "JsonFormatter",
             "RedactionFilter",
             "SamplingFilter",
+            "get_logging_metadata",
             "get_logger",
             "inject_context",
             "setup_logging",
@@ -32,8 +33,8 @@ class TestAPISurface:
             RedactionFilter,
             SamplingFilter,
             get_logger,
+            get_logging_metadata,
             inject_context,
-            setup_logging,
         )
 
     def test_get_logger_is_callable(self) -> None:
