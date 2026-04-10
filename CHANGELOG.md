@@ -2,93 +2,177 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+### Bug Fixes
 
-## [0.4.1] - 2026-03-29
+- Rewrite design principle per Oracle review 
+- Switch Mermaid fence format to fence_div_format for rendering 
+- Make setup_logging idempotent per logger_name (#34) 
+- Prevent RedactionFilter crashes on attribute access errors (#33) 
+- Add threading lock and mark-on-success for setup_logging 
+- Make setup_logging idempotent per logger name 
 
-### Added
+### Documentation
 
-- Runtime contract tests for observable behavior (#28)
+- Apply Oracle review fixes to Before/After section (#65) 
+- Add ecosystem table to README 
+- Add llms.txt for LLM-friendly documentation (#56) (#57) 
+- Normalize storage naming rule to use en-dash (3–24) 
+- Rewrite deployment guide for developer-friendly Azure Functions experience 
+- Add Azure deployment verification note to README (#52) 
+- Add Azure-verified sample output to README (#51) 
+- Add deployment guide with structured logging verification (#49) 
+- Add ecosystem positioning and design principle 
+- Enable Mermaid diagram rendering on GitHub Pages 
+- Add Key Design Decisions and fix idempotency wording (#42) 
+- Standardize architecture docs with Mermaid diagrams, Sources, See Also 
+- Add release process to AGENTS.md 
 
-### Docs
+### Features
 
-- Add missing `exception` field to README JSON example (#25)
-- Update README with Azure Functions Python DX Toolkit branding
+- Add toolkit metadata convention support 
 
-### Internal
+### Miscellaneous Tasks
 
-- Dependency updates: ruff 0.15.8, github/codeql-action 4.35.1, codecov/codecov-action 6.0.0, anchore/sbom-action 0.24.0
-- Rename publish environment from production to release
-- Unify CI/CD workflow configurations
+- Add cliff.toml and bump ruff to 0.15.10 (#62) 
+- Add CODE_OF_CONDUCT.md and SUPPORT.md for DX Toolkit consistency (#60) 
+- *(deps)* Bump softprops/action-gh-release from 2.2.2 to 2.6.1 
+- *(deps)* Bump ruff from 0.15.8 to 0.15.9 
+- *(deps)* Bump mypy from 1.19.1 to 1.20.0 
+- Add automatic GitHub Release creation on tag push (#30) 
 
-## [0.4.0] - 2026-03-21
+### Other
 
-### Added
+- Bump version to 0.5.0 
 
-- Real Azure end-to-end test workflow (`e2e-azure.yml`) deploying to Consumption plan (`koreacentral`)
-- `docs/testing.md` — Real Azure E2E Tests section
-- Pre-commit config, SBOM/CodeQL workflows, codecov config
+### Refactor
 
-### Changed
+- Rename metadata attr to _azure_functions_metadata (#67) 
 
-- GitHub Actions versions upgraded to Node.js 24 compatible versions
-- Repository consistency fixes (AGENTS.md, .gitignore standardization)
+### Documentation
 
-### Fixed
+- Add missing exception field to README JSON example (#25) 
+- Update README with Azure Functions Python DX Toolkit branding 
 
-- Treat arbitrary logger kwargs as structured extra fields (#6)
-- Recursively redact nested dict/list log extras (#7)
-## [0.3.0] - 2026-03-15
+### Features
 
-### Added
+- Add with_context decorator to reduce inject_context() boilerplate (#27) 
 
-- `SamplingFilter` for probabilistic log sampling
-- `RedactionFilter` for masking sensitive fields in log records
-- `ColorFormatter` `include_extra` parameter for structured extra fields in dev output
-- `functions_formatter` parameter in `setup_logging()` for custom Azure handler formatting
-- `host.json` `None` log level support (`logLevel.default: none`)
-- Context leak reset between invocations (`invocation_id` and `function_name` cleared on re-entry)
+### Miscellaneous Tasks
 
-### Fixed
+- Release v0.4.1 
+- *(deps)* Bump anchore/sbom-action from 0.23.1 to 0.24.0 
+- *(deps)* Bump codecov/codecov-action from 5.5.3 to 6.0.0 
+- *(deps)* Bump github/codeql-action from 4.33.0 to 4.35.1 
+- *(deps)* Bump ruff from 0.15.6 to 0.15.8 
+- Use standard pypi environment name for Trusted Publisher 
+- Rename publish environment from production to release 
+- Unify CI/CD workflow configurations 
 
-- NDJSON output line-break handling in `JsonFormatter`
+### Testing
 
-## [0.2.2] - 2026-03-14
+- Add runtime contract tests for observable behavior (#28) 
 
-### Added
+### Bug Fixes
 
-- Unified tooling: Ruff (lint + format), pre-commit hooks, standardized Makefile
-- Comprehensive documentation overhaul (17 MkDocs pages)
-- 5 runnable example scripts with smoke tests
-- Translated README files (Korean, Japanese, Chinese)
-- Standardized nav structure and documentation quality across ecosystem
-- pyproject.toml metadata (classifiers, project URLs)
-- Project metadata in logging output
+- Recursively redact nested dict/list log extras (#7) 
+- Treat arbitrary logger kwargs as structured extra fields (#6) 
+- Add --resource-group to app insights query and pass E2E_RESOURCE_GROUP env var 
+- Add --no-cov and pytest-html artifact to e2e workflow 
 
-## [0.2.1] - 2026-03-12
+### Documentation
 
-### Added
+- Add before/after terminal screenshots to README 
+- Add real Azure e2e test section to testing.md and CHANGELOG 
+- Add with_scaffold example showing scaffold integration 
 
-- `py.typed` marker file for PEP 561 type checking support
+### Features
 
-## [0.2.0] - 2026-03-12
+- Add real Azure e2e tests and CI workflow 
 
-### Added
+### Miscellaneous Tasks
 
-- `JsonFormatter` for structured NDJSON log output
-- `FunctionLogger` class with context binding via `bind()`
-- Invocation context injection (invocation_id, function_name, trace_id)
-- Automatic cold start detection
-- `host.json` log level conflict warning
-- `ContextFilter` for propagating context fields to log records
+- Release v0.4.0 
+- Remove nonexistent docs/agent-playbook.md ref from AGENTS.md, standardize .gitignore (#9) 
+- Add pre-commit config, SBOM/CodeQL workflows, codecov config, adjust coverage threshold (#8) 
+- *(deps)* Bump ruff from 0.15.5 to 0.15.6 
+- *(deps)* Update mkdocstrings[python] requirement from <1.0 to <2.0 
+- *(deps)* Bump anchore/sbom-action from 0.23.0 to 0.23.1 
+- Trigger e2e only on release tag push (v*) 
+- Upgrade GitHub Actions to Node.js 24 compatible versions 
+- Enforce coverage fail_under = 95 
+- Add .editorconfig and mypy exclude for examples/ 
+- Add keywords to pyproject.toml 
+- Add AGENTS.md, Typing classifier, test_public_api, Dev Status 4-Beta, .venv-review in .gitignore 
 
-## [0.1.0] - 2026-03-11
+### Bug Fixes
 
-### Added
+- Use setattr/getattr in tests to avoid unused type: ignore on Python 3.12+ 
 
-- `setup_logging()` one-liner for environment-aware log configuration
-- `get_logger(__name__)` helper for convenient logger creation
-- `ColorFormatter` with colorized log levels (DEBUG gray, INFO blue, WARNING yellow, ERROR red, CRITICAL bold red)
-- Clean `[TIME] [LEVEL] [LOGGER] message` format
-- Exception-friendly output with readable stack traces
-- Compatible with Python's standard `logging` module
+### Documentation
+
+- Reposition README as Azure Functions Python observability helper 
+
+### Features
+
+- P0/P1/P2 improvements — NDJSON fix, host.json None level, context leak reset, ColorFormatter include_extra, functions_formatter param, SamplingFilter, RedactionFilter (v0.3.0) 
+
+### Miscellaneous Tasks
+
+- Add dependabot.yml with pip and github-actions ecosystems 
+- Add production environment to release.yml for trusted publishing 
+
+### Testing
+
+- Cover host_config None level, malformed JSON, and unrecognized level paths 
+
+### Documentation
+
+- Overhaul documentation to production quality 
+- Sync translated READMEs (ko, ja, zh-CN) with English 
+- Unify README — Title Case H1, add Ecosystem, fold Development into Installation; add pyproject.toml classifiers and project URLs 
+- Add example-first design section to PRD 
+- Fix inaccuracies across 7 doc files against actual source code 
+- Expand all documentation pages to production quality 
+- Add MkDocs infrastructure with full documentation site 
+- Add badges and translated READMEs (ko, ja, zh-CN) 
+
+### Features
+
+- Add 5 runnable example scripts with smoke tests 
+
+### Other
+
+- Bump version to 0.2.2 
+
+### Styling
+
+- Unify tooling — remove black, standardize pre-commit and Makefile 
+
+### Bug Fixes
+
+- Add py.typed marker for PEP 561 compliance (v0.2.1) 
+
+### Bug Fixes
+
+- Resolve ruff I001 import ordering in test files 
+
+### Documentation
+
+- Update PRD with research findings and v0.1.0 scope 
+- Add DESIGN.md and AGENT.md for project architecture 
+- *(readme)* Rewrite README to match ecosystem structure 
+- *(readme)* Add Microsoft trademark disclaimer 
+- Add initial PRD 
+
+### Features
+
+- Add JsonFormatter and host.json level conflict warning (v0.2.0) 
+- Implement setup_logging with environment-aware configuration 
+- Implement ColorFormatter and FunctionLogger wrapper 
+- Implement context injection with contextvars and filter 
+
+### Miscellaneous Tasks
+
+- Add project infrastructure to match ecosystem standards 
+- Add initial project scaffold 
+<!-- generated by git-cliff -->
