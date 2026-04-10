@@ -64,7 +64,7 @@ Processing order
 Order: {'customer': 'Alice', 'total': 99.99}
 ```
 
-> No invocation ID. No log level. No way to find this in Application Insights.
+> No invocation ID. No log level. Hard to correlate in Application Insights.
 
 **With** `azure-functions-logging` — structured, queryable, production-ready:
 
@@ -81,27 +81,28 @@ app = func.FunctionApp()
 @app.route(route="orders")
 def process_order(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
     inject_context(context)
-    logger.info("Processing order", order=req.get_json())
+    logger.info("Processing order", order_id="o-999")
     return func.HttpResponse("OK")
 ```
 
 Local terminal output (colorized):
 
 ```
-[2024-01-15 10:30:00] [INFO] [function_app] Processing order
-  invocation_id=abc-123-def  function_name=process_order  cold_start=true
+10:30:00 INFO     function_app  Processing order  [invocation_id=abc-123-def, function_name=process_order, cold_start=true]
 ```
 
 Production output (NDJSON for Application Insights):
 
 ```json
-{"timestamp": "2024-01-15T10:30:00Z", "level": "INFO", "logger": "function_app",
+{"timestamp": "2024-01-15T10:30:00+00:00", "level": "INFO", "logger": "function_app",
  "message": "Processing order", "invocation_id": "abc-123-def",
- "function_name": "process_order", "cold_start": true,
- "extra": {"order": {"customer": "Alice", "total": 99.99}}}
+ "function_name": "process_order", "trace_id": null, "cold_start": true,
+ "exception": null, "extra": {"order_id": "o-999"}}
 ```
 
 > Every log carries `invocation_id` and `cold_start`. Queryable in Application Insights. Zero `print()` statements.
+
+> **Note:** The exact Application Insights schema depends on your ingestion pipeline. The queries below assume structured JSON fields appear in `customDimensions`.
 
 ### Query in Application Insights
 
@@ -251,7 +252,7 @@ setup_logging(format="json")
 Output per log line (NDJSON — one JSON object per line):
 
 ```json
-{"timestamp": "2024-01-15T10:30:00Z", "level": "INFO", "logger": "my_module",
+{"timestamp": "2024-01-15T10:30:00+00:00", "level": "INFO", "logger": "my_module",
  "message": "order accepted", "invocation_id": "abc-123", "function_name": "OrderHandler",
  "cold_start": false, "trace_id": "00-abc...", "exception": null,
  "extra": {"order_id": "o-999"}}
