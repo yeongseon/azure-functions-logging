@@ -25,7 +25,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 _DEFAULT_PARAM = "context"
 
-_TOOLKIT_META_ATTR = "_azure_functions_toolkit_metadata"
+_TOOLKIT_META_ATTR = "_azure_functions_metadata"
 
 
 def _merge_toolkit_metadata(

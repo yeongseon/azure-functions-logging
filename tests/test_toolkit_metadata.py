@@ -1,4 +1,4 @@
-"""Tests for the _azure_functions_toolkit_metadata convention on with_context."""
+"""Tests for the _azure_functions_metadata convention on with_context."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class TestWithContextMetadata:
         def handler(req: object, context: object) -> None:
             pass
 
-        metadata = getattr(handler, "_azure_functions_toolkit_metadata")
+        metadata = getattr(handler, "_azure_functions_metadata")
         assert metadata is not None
         assert "logging" in metadata
         meta = metadata["logging"]
@@ -29,7 +29,7 @@ class TestWithContextMetadata:
         async def handler(req: object, context: object) -> None:
             pass
 
-        metadata = getattr(handler, "_azure_functions_toolkit_metadata")
+        metadata = getattr(handler, "_azure_functions_metadata")
         assert metadata is not None
         meta = metadata["logging"]
         assert meta["version"] == 1
@@ -42,7 +42,7 @@ class TestWithContextMetadata:
         def handler(req: object, ctx: object) -> None:
             pass
 
-        metadata = getattr(handler, "_azure_functions_toolkit_metadata")
+        metadata = getattr(handler, "_azure_functions_metadata")
         meta = metadata["logging"]
         assert meta["version"] == 1
         assert meta["context_param"] == "ctx"
@@ -54,7 +54,7 @@ class TestWithContextMetadata:
         async def handler(req: object, my_context: object) -> None:
             pass
 
-        metadata = getattr(handler, "_azure_functions_toolkit_metadata")
+        metadata = getattr(handler, "_azure_functions_metadata")
         meta = metadata["logging"]
         assert meta["version"] == 1
         assert meta["context_param"] == "my_context"
@@ -84,7 +84,7 @@ class TestGetLoggingMetadata:
         def handler() -> None:
             pass
 
-        setattr(handler, "_azure_functions_toolkit_metadata", "not-a-dict")
+        setattr(handler, "_azure_functions_metadata", "not-a-dict")
         result = get_logging_metadata(handler)
         assert result is None
 
@@ -92,7 +92,7 @@ class TestGetLoggingMetadata:
         def handler() -> None:
             pass
 
-        setattr(handler, "_azure_functions_toolkit_metadata", {"other": {}})
+        setattr(handler, "_azure_functions_metadata", {"other": {}})
         result = get_logging_metadata(handler)
         assert result is None
 
@@ -109,13 +109,13 @@ class TestMetadataNamespacePreservation:
         # Manually set metadata for another namespace
         setattr(
             handler,
-            "_azure_functions_toolkit_metadata",
+            "_azure_functions_metadata",
             {"db": {"version": 1, "bindings": []}},
         )
 
         decorated = with_context(handler)
 
-        metadata = getattr(decorated, "_azure_functions_toolkit_metadata")
+        metadata = getattr(decorated, "_azure_functions_metadata")
         assert "db" in metadata
         assert "logging" in metadata
         assert metadata["db"] == {"version": 1, "bindings": []}
@@ -130,13 +130,13 @@ class TestMetadataNamespacePreservation:
 
         setattr(
             handler,
-            "_azure_functions_toolkit_metadata",
+            "_azure_functions_metadata",
             {"validation": {"version": 1, "rules": []}},
         )
 
         decorated = with_context(handler)
 
-        metadata = getattr(decorated, "_azure_functions_toolkit_metadata")
+        metadata = getattr(decorated, "_azure_functions_metadata")
         assert "validation" in metadata
         assert "logging" in metadata
         assert metadata["validation"] == {"version": 1, "rules": []}
