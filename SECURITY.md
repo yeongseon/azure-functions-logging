@@ -31,5 +31,5 @@ If you prefer email, contact: yeongseon.choe@gmail.com
 
 | Version | Supported |
 | ------- | --------- |
-| Latest release | Yes |
-| Older releases | No |
+| Latest release | :white_check_mark: |
+| Older releases | :x: |
