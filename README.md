@@ -44,11 +44,84 @@ Azure Functions Python logging has specific failure modes that generic logging l
 
 **Without** `azure-functions-logging` — plain `print()` output, no context, no structure:
 
-![Before: plain print output with no context](docs/assets/demo-before.png)
+```python
+import azure.functions as func
 
-**With** `azure-functions-logging` — colorized local dev output and production-ready JSON:
+app = func.FunctionApp()
 
-![After: structured color output and JSON](docs/assets/demo-after.png)
+
+@app.route(route="orders")
+def process_order(req: func.HttpRequest) -> func.HttpResponse:
+    print("Processing order")        # no invocation_id, no structure
+    print(f"Order: {req.get_json()}")  # PII may leak, no log level
+    return func.HttpResponse("OK")
+```
+
+Terminal output:
+
+```
+Processing order
+Order: {'customer': 'Alice', 'total': 99.99}
+```
+
+> No invocation ID. No log level. No way to find this in Application Insights.
+
+**With** `azure-functions-logging` — structured, queryable, production-ready:
+
+```python
+import azure.functions as func
+
+from azure_functions_logging import get_logger, inject_context, setup_logging
+
+setup_logging()
+logger = get_logger(__name__)
+app = func.FunctionApp()
+
+
+@app.route(route="orders")
+def process_order(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    inject_context(context)
+    logger.info("Processing order", order=req.get_json())
+    return func.HttpResponse("OK")
+```
+
+Local terminal output (colorized):
+
+```
+[2024-01-15 10:30:00] [INFO] [function_app] Processing order
+  invocation_id=abc-123-def  function_name=process_order  cold_start=true
+```
+
+Production output (NDJSON for Application Insights):
+
+```json
+{"timestamp": "2024-01-15T10:30:00Z", "level": "INFO", "logger": "function_app",
+ "message": "Processing order", "invocation_id": "abc-123-def",
+ "function_name": "process_order", "cold_start": true,
+ "extra": {"order": {"customer": "Alice", "total": 99.99}}}
+```
+
+> Every log carries `invocation_id` and `cold_start`. Queryable in Application Insights. Zero `print()` statements.
+
+### Query in Application Insights
+
+Once your logs flow as structured JSON, query them in Application Insights:
+
+```kql
+traces
+| where customDimensions.invocation_id == "abc-123-def"
+| project timestamp, message, customDimensions.cold_start, customDimensions.function_name
+| order by timestamp asc
+```
+
+Find all cold starts in the last hour:
+
+```kql
+traces
+| where customDimensions.cold_start == "true"
+| where timestamp > ago(1h)
+| summarize count() by bin(timestamp, 5m)
+```
 
 ## What this package does not do
 
