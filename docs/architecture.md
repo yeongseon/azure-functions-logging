@@ -85,6 +85,54 @@ In non-Functions environments:
 
 This gives deterministic local behavior with minimal code.
 
+## Request Flow and Runtime Relationship
+
+`azure-functions-logging` operates at two distinct lifecycle points within the Azure Functions runtime:
+
+1. **Startup** — `setup_logging()` configures handlers, formatters, and filters once during module initialization.
+2. **Per-request** — `inject_context()` (or `@with_context`) captures invocation metadata into `contextvars` at the start of each function invocation.
+
+```mermaid
+sequenceDiagram
+    participant Client as HTTP Client
+    participant Host as Azure Functions Host
+    participant Worker as Python Worker
+    participant Setup as setup_logging()
+    participant Handler as Function Handler
+    participant Ctx as inject_context()
+    participant Logger as FunctionLogger
+    participant CF as ContextFilter
+    participant Output as Log Output
+
+    rect rgb(240, 248, 255)
+    note over Worker,Setup: Startup (once per worker process)
+    Worker->>Setup: import → setup_logging()
+    Setup->>Setup: detect environment (FUNCTIONS_WORKER_RUNTIME)
+    alt Azure / Core Tools runtime
+        Setup->>Setup: install ContextFilter on existing host handlers
+    else Local standalone
+        Setup->>Setup: create StreamHandler + formatter
+    end
+    end
+
+    rect rgb(255, 248, 240)
+    note over Client,Output: Per Invocation
+    Client->>Host: HTTP Request
+    Host->>Worker: invoke with func.Context
+    Worker->>Handler: call function handler
+    Handler->>Ctx: inject_context(context)
+    Ctx->>Ctx: set contextvars (invocation_id, function_name, ...)
+    Handler->>Logger: logger.info("Processing...")
+    Logger->>CF: LogRecord passes through ContextFilter
+    CF->>CF: copy contextvars onto LogRecord
+    CF->>Output: enriched log → stdout / Application Insights
+    Handler-->>Worker: return HttpResponse
+    Worker-->>Host: response
+    end
+```
+
+The host manages log shipping to Application Insights. This library enriches log records with invocation context but does not replace or bypass the host's log pipeline.
+
 ## Context Propagation Model
 
 Invocation metadata is carried through `contextvars`:
