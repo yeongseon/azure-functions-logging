@@ -1,6 +1,6 @@
 # Security
 
-This document covers the security policy, threat model, and vulnerability reporting process for `azure-functions-logging`.
+This document covers the security policy, threat model, and vulnerability reporting process for `azure-functions-logging-python`.
 
 ## Reporting Vulnerabilities
 
@@ -10,7 +10,7 @@ If you discover a security vulnerability, please report it responsibly.
 
 Use GitHub's private vulnerability reporting feature:
 
-[Report a vulnerability](https://github.com/yeongseon/azure-functions-logging/security/advisories/new)
+[Report a vulnerability](https://github.com/yeongseon/azure-functions-logging-python/security/advisories/new)
 
 ### Alternative Method
 
@@ -46,7 +46,7 @@ Security fixes are applied to the latest release only. Users should upgrade to t
 
 ## Threat Model
 
-`azure-functions-logging` is a logging configuration library that runs within the same process as the Azure Functions host. Its security surface is limited by design.
+`azure-functions-logging-python` is a logging configuration library that runs within the same process as the Azure Functions host. Its security surface is limited by design.
 
 ### File System Access
 
@@ -125,7 +125,7 @@ Development dependencies (not installed at runtime):
 
 ## Python Version Policy
 
-`azure-functions-logging` requires Python >= 3.10. This ensures:
+`azure-functions-logging-python` requires Python >= 3.10. This ensures:
 
 - Active CPython support with security patches
 - `contextvars` support for async-safe context propagation
@@ -136,4 +136,4 @@ Older Python versions are not supported and may contain known vulnerabilities.
 
 ## License
 
-MIT License. See the [LICENSE](https://github.com/yeongseon/azure-functions-logging/blob/main/LICENSE) file for details.
+MIT License. See the [LICENSE](https://github.com/yeongseon/azure-functions-logging-python/blob/main/LICENSE) file for details.

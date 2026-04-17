@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to `azure-functions-logging`. This guide covers the contribution workflow, code standards, and release process.
+Thank you for your interest in contributing to `azure-functions-logging-python`. This guide covers the contribution workflow, code standards, and release process.
 
 ## Getting Started
 
@@ -8,8 +8,8 @@ Thank you for your interest in contributing to `azure-functions-logging`. This g
 2. Clone your fork:
 
    ```bash
-   git clone https://github.com/<your-username>/azure-functions-logging.git
-   cd azure-functions-logging
+   git clone https://github.com/<your-username>/azure-functions-logging-python.git
+   cd azure-functions-logging-python
    ```
 
 3. Install development dependencies:
@@ -212,4 +212,4 @@ Before making changes, familiarize yourself with the module structure in the [Ar
 
 ## Questions?
 
-Open an issue on [GitHub](https://github.com/yeongseon/azure-functions-logging/issues).
+Open an issue on [GitHub](https://github.com/yeongseon/azure-functions-logging-python/issues).

@@ -73,6 +73,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Compatible with Python's standard `logging` module
 - Support for Python 3.10, 3.11, 3.12, 3.13, 3.14
 
-[0.2.1]: https://github.com/yeongseon/azure-functions-logging/releases/tag/v0.2.1
-[0.2.0]: https://github.com/yeongseon/azure-functions-logging/releases/tag/v0.2.0
-[0.1.0]: https://github.com/yeongseon/azure-functions-logging/releases/tag/v0.1.0
+[0.2.1]: https://github.com/yeongseon/azure-functions-logging-python/releases/tag/v0.2.1
+[0.2.0]: https://github.com/yeongseon/azure-functions-logging-python/releases/tag/v0.2.0
+[0.1.0]: https://github.com/yeongseon/azure-functions-logging-python/releases/tag/v0.1.0

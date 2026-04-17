@@ -1,6 +1,6 @@
 # Testing
 
-This guide covers the testing strategy, structure, and practices for `azure-functions-logging`.
+This guide covers the testing strategy, structure, and practices for `azure-functions-logging-python`.
 
 ## Running Tests
 

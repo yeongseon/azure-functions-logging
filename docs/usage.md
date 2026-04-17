@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide covers practical, production-oriented usage of `azure-functions-logging` across local development and Azure Functions runtime deployment.
+This guide covers practical, production-oriented usage of `azure-functions-logging-python` across local development and Azure Functions runtime deployment.
 
 ## Quick Baseline
 

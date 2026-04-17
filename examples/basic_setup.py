@@ -1,4 +1,4 @@
-"""Basic logging setup with azure-functions-logging."""
+"""Basic logging setup with azure-functions-logging-python."""
 
 from __future__ import annotations
 

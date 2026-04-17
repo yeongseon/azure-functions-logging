@@ -1,13 +1,13 @@
-# azure-functions-logging
+# azure-functions-logging-python
 
-[![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
-[![CI](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-logging/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/publish-pypi.yml)
-[![Security Scans](https://github.com/yeongseon/azure-functions-logging/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/yeongseon/azure-functions-logging/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-logging)
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-logging-python.svg)](https://pypi.org/project/azure-functions-logging-python/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging-python/)
+[![CI](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/ci-test.yml)
+[![Release](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/publish-pypi.yml)
+[![Security Scans](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/yeongseon/azure-functions-logging-python/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-logging-python)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-logging/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-logging-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
@@ -42,18 +42,18 @@ Azure Functions Python logging has specific failure modes that generic logging l
 
 ## Before / After
 
-**Without** `azure-functions-logging` — plain `print()` output, no context, no structure:
+**Without** `azure-functions-logging-python` — plain `print()` output, no context, no structure:
 
 ![Before: plain print output with no context](docs/assets/demo-before.png)
 
-**With** `azure-functions-logging` — colorized local dev output and production-ready JSON:
+**With** `azure-functions-logging-python` — colorized local dev output and production-ready JSON:
 
 ![After: structured color output and JSON](docs/assets/demo-after.png)
 
 ## Installation
 
 ```bash
-pip install azure-functions-logging
+pip install azure-functions-logging-python
 ```
 
 ## Quick Start
@@ -237,10 +237,10 @@ Create bound loggers per-invocation. Do not cache them at module level.
 
 ## Documentation
 
-- Full docs: [yeongseon.github.io/azure-functions-logging](https://yeongseon.github.io/azure-functions-logging/)
-- [Configuration reference](https://yeongseon.github.io/azure-functions-logging/configuration/)
-- [Troubleshooting guide](https://yeongseon.github.io/azure-functions-logging/troubleshooting/)
-- [API reference](https://yeongseon.github.io/azure-functions-logging/api/)
+- Full docs: [yeongseon.github.io/azure-functions-logging-python](https://yeongseon.github.io/azure-functions-logging-python/)
+- [Configuration reference](https://yeongseon.github.io/azure-functions-logging-python/configuration/)
+- [Troubleshooting guide](https://yeongseon.github.io/azure-functions-logging-python/troubleshooting/)
+- [API reference](https://yeongseon.github.io/azure-functions-logging-python/api/)
 
 ## Ecosystem
 
@@ -248,12 +248,12 @@ Part of the **Azure Functions Python DX Toolkit**:
 
 | Package | Role |
 |---------|------|
-| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request and response validation |
-| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec and Swagger UI |
-| **azure-functions-logging** | Structured logging and observability |
-| [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) | Pre-deploy diagnostic CLI |
-| [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) | Project scaffolding |
-| [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
+| [azure-functions-validation-python](https://github.com/yeongseon/azure-functions-validation-python) | Request and response validation |
+| [azure-functions-openapi-python](https://github.com/yeongseon/azure-functions-openapi-python) | OpenAPI spec and Swagger UI |
+| **azure-functions-logging-python** | Structured logging and observability |
+| [azure-functions-doctor-python](https://github.com/yeongseon/azure-functions-doctor-python) | Pre-deploy diagnostic CLI |
+| [azure-functions-scaffold-python](https://github.com/yeongseon/azure-functions-scaffold-python) | Project scaffolding |
+| [azure-functions-cookbook-python](https://github.com/yeongseon/azure-functions-cookbook-python) | Recipes and examples |
 
 ## Disclaimer
 

@@ -1,1 +1,1 @@
-"""Examples package for azure-functions-logging."""
+"""Examples package for azure-functions-logging-python."""

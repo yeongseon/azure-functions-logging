@@ -1,6 +1,6 @@
 # Quickstart
 
-Get `azure-functions-logging` running in a few minutes, then expand into structured logs, context injection, and request-scoped metadata.
+Get `azure-functions-logging-python` running in a few minutes, then expand into structured logs, context injection, and request-scoped metadata.
 
 ## What You Will Build
 
@@ -29,14 +29,14 @@ Before starting, make sure your environment includes:
 Install from PyPI:
 
 ```bash
-pip install azure-functions-logging
+pip install azure-functions-logging-python
 ```
 
 If you pin dependencies, add to `requirements.txt`:
 
 ```text
 azure-functions
-azure-functions-logging==0.2.1
+azure-functions-logging-python==0.2.1
 ```
 
 !!! note

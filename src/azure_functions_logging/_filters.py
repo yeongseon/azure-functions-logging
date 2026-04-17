@@ -1,4 +1,4 @@
-"""Optional log filters for azure-functions-logging.
+"""Optional log filters for azure-functions-logging-python.
 
 Provides:
 - ``SamplingFilter``: Rate-limit noisy loggers to reduce gRPC/stdout pressure.

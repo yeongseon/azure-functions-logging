@@ -1,6 +1,6 @@
 # FAQ
 
-Answers to common production and day-to-day questions about `azure-functions-logging`.
+Answers to common production and day-to-day questions about `azure-functions-logging-python`.
 
 ## Does it work outside Azure Functions?
 

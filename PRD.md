@@ -1,10 +1,10 @@
 # Product Requirements Document
 
-# azure-functions-logging
+# azure-functions-logging-python
 
 ## 1. Overview
 
-`azure-functions-logging` is a lightweight logging helper designed to improve the developer
+`azure-functions-logging-python` is a lightweight logging helper designed to improve the developer
 experience of working with logs in Azure Functions Python v2.
 
 Developers building Azure Functions in Python face several logging pain points: visually
@@ -258,12 +258,12 @@ inject_context(func_context)
 
 ## 13. Positioning
 
-`azure-functions-logging` is part of the `azure-functions-*` Python ecosystem:
+`azure-functions-logging-python` is part of the `azure-functions-*` Python ecosystem:
 
-- `azure-functions-validation` — Request/response validation
-- `azure-functions-openapi` — OpenAPI generation
-- `azure-functions-logging` — Developer-friendly logging
-- `azure-functions-doctor` — Project diagnostics
+- `azure-functions-validation-python` — Request/response validation
+- `azure-functions-openapi-python` — OpenAPI generation
+- `azure-functions-logging-python` — Developer-friendly logging
+- `azure-functions-doctor-python` — Project diagnostics
 
 The focus is simplicity, readability, and Azure Functions-specific safety.
 
@@ -273,7 +273,7 @@ The focus is simplicity, readability, and Azure Functions-specific safety.
 
 Small-ecosystem libraries live or die by the quality of their examples.
 If a developer cannot go from `pip install` to readable log output in under five minutes,
-the library has already lost. `azure-functions-logging` treats inline code examples
+the library has already lost. `azure-functions-logging-python` treats inline code examples
 as a first-class deliverable — every feature section above includes a runnable snippet.
 
 ### Quick Start (Hello World)
@@ -312,7 +312,7 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
    evaluate the library before reading any reference documentation.
 2. **AI agent discoverability.** Tools like GitHub Copilot, Cursor, and Claude Code recommend
    libraries based on README, PRD, and example content. Inline code snippets increase the
-   chance that AI agents surface `azure-functions-logging` for relevant prompts.
+   chance that AI agents surface `azure-functions-logging-python` for relevant prompts.
 3. **Cookbook role.** For niche ecosystems, inline examples and `docs/` often serve as the
    primary learning material. Every new feature should include a runnable code snippet.
 4. **Proven approach.** FastAPI, LangChain, SQLAlchemy, and Pandas all achieved early adoption

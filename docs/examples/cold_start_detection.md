@@ -1,6 +1,6 @@
 # Example: Cold Start Detection
 
-`azure-functions-logging` automatically flags cold starts through the `cold_start` field when `inject_context(context)` is called.
+`azure-functions-logging-python` automatically flags cold starts through the `cold_start` field when `inject_context(context)` is called.
 
 ## Goal
 

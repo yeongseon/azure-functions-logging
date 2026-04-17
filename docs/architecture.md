@@ -1,6 +1,6 @@
 # Architecture
 
-This document explains how `azure-functions-logging` is structured internally and why key design choices support Azure Functions production behavior.
+This document explains how `azure-functions-logging-python` is structured internally and why key design choices support Azure Functions production behavior.
 
 ## Design Objectives
 

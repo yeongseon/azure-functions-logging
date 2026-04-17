@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This guide covers the most common production and local issues when integrating `azure-functions-logging`.
+This guide covers the most common production and local issues when integrating `azure-functions-logging-python`.
 
 ## Logs Not Showing in Azure
 

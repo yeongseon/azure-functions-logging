@@ -51,7 +51,7 @@ jobs:
           az group create \
             --name "${{ steps.names.outputs.rg }}" \
             --location "$AZURE_LOCATION" \
-            --tags purpose=e2e repo=azure-functions-logging run="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            --tags purpose=e2e repo=azure-functions-logging-python run="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
       - name: Deploy infra with App Insights (Bicep)
         run: |

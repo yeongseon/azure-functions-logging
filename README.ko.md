@@ -1,13 +1,13 @@
 # Azure Functions Logging
 
-[![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
-[![CI](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-logging/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/release.yml)
-[![Security Scans](https://github.com/yeongseon/azure-functions-logging/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/yeongseon/azure-functions-logging/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-logging)
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-logging-python.svg)](https://pypi.org/project/azure-functions-logging-python/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging-python/)
+[![CI](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/ci-test.yml)
+[![Release](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/release.yml)
+[![Security Scans](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-logging-python/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/yeongseon/azure-functions-logging-python/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-logging-python)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-logging/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-logging-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 다른 언어: [English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
@@ -22,7 +22,7 @@ Azure Functions Python 핸들러는 다음과 같은 logging 관련 불편함이
 - 에러가 일반 info 레벨 로그 사이에서 잘 눈에 띄지 않음
 - 기본 포맷이 사람이 읽기에 최적화되어 있지 않음
 
-`azure-functions-logging`은 Python의 표준 `logging` 모듈과 호환되며, 최소한의 설정으로 색상이 적용되고 깔끔하게 포맷된 로그 출력을 제공합니다.
+`azure-functions-logging-python`은 Python의 표준 `logging` 모듈과 호환되며, 최소한의 설정으로 색상이 적용되고 깔끔하게 포맷된 로그 출력을 제공합니다.
 
 ## Scope
 
@@ -50,14 +50,14 @@ Azure Functions Python 핸들러는 다음과 같은 logging 관련 불편함이
 ## Installation
 
 ```bash
-pip install azure-functions-logging
+pip install azure-functions-logging-python
 ```
 
 로컬 개발용:
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-logging.git
-cd azure-functions-logging
+git clone https://github.com/yeongseon/azure-functions-logging-python.git
+cd azure-functions-logging-python
 pip install -e .[dev]
 ```
 
@@ -101,16 +101,16 @@ bound.info("Processing")  # includes user_id + operation in every log line
 
 ## Documentation
 
-- 전체 문서: [yeongseon.github.io/azure-functions-logging](https://yeongseon.github.io/azure-functions-logging/)
+- 전체 문서: [yeongseon.github.io/azure-functions-logging-python](https://yeongseon.github.io/azure-functions-logging-python/)
 - 제품 요구 사항: `PRD.md`
 
 ## Ecosystem
 
-- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — 요청 및 응답 검증
-- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI 및 Swagger UI
-- [azure-functions-doctor](https://github.com/yeongseon/azure-functions-doctor) — 진단 CLI
-- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — 프로젝트 스캐폴딩
-- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — 레시피 및 예제
+- [azure-functions-validation-python](https://github.com/yeongseon/azure-functions-validation-python) — 요청 및 응답 검증
+- [azure-functions-openapi-python](https://github.com/yeongseon/azure-functions-openapi-python) — OpenAPI 및 Swagger UI
+- [azure-functions-doctor-python](https://github.com/yeongseon/azure-functions-doctor-python) — 진단 CLI
+- [azure-functions-scaffold-python](https://github.com/yeongseon/azure-functions-scaffold-python) — 프로젝트 스캐폴딩
+- [azure-functions-cookbook-python](https://github.com/yeongseon/azure-functions-cookbook-python) — 레시피 및 예제
 
 ## Disclaimer
 

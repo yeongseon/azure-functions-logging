@@ -1,7 +1,7 @@
 site_name: Azure Functions Logging
 site_description: Developer-friendly logging helpers for Azure Functions Python
 site_author: Yeongseon Choe
-repo_url: https://github.com/yeongseon/azure-functions-logging
+repo_url: https://github.com/yeongseon/azure-functions-logging-python
 edit_uri: edit/main/docs/
 
 theme:
@@ -29,7 +29,7 @@ nav:
       - Host JSON Conflicts: examples/host_json_conflicts.md
       - Logger Name Targeting: examples/logger_name_targeting.md
       - Third-Party Noise Control: examples/third_party_noise_control.md
-      - With azure-functions-scaffold: examples/with_scaffold.md
+      - With azure-functions-scaffold-python: examples/with_scaffold.md
   - API Reference: api.md
   - Contributing:
       - Development: development.md
@@ -70,6 +70,6 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yeongseon/azure-functions-logging
+      link: https://github.com/yeongseon/azure-functions-logging-python
   copyright: |
     © 2026 Yeongseon Choe – MIT Licensed

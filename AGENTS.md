@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Purpose
-`azure-functions-logging` provides structured JSON logging for Azure Functions Python v2 applications.
+`azure-functions-logging-python` provides structured JSON logging for Azure Functions Python v2 applications.
 
 ## Read First
 - `README.md`

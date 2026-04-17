@@ -1,6 +1,6 @@
 # Development
 
-This guide explains how to set up a development environment for `azure-functions-logging`.
+This guide explains how to set up a development environment for `azure-functions-logging-python`.
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@ This guide explains how to set up a development environment for `azure-functions
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yeongseon/azure-functions-logging.git
-   cd azure-functions-logging
+   git clone https://github.com/yeongseon/azure-functions-logging-python.git
+   cd azure-functions-logging-python
    ```
 
 2. Install the package in editable mode with development dependencies:
@@ -38,7 +38,7 @@ This guide explains how to set up a development environment for `azure-functions
 ## Project Structure
 
 ```
-azure-functions-logging/
+azure-functions-logging-python/
 +-- src/azure_functions_logging/   # Library source code
 |   +-- __init__.py                # Public API (setup_logging, get_logger, inject_context)
 |   +-- _setup.py                  # Logging system configuration

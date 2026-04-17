@@ -1,4 +1,4 @@
-"""FunctionLogger wrapper for azure-functions-logging."""
+"""FunctionLogger wrapper for azure-functions-logging-python."""
 
 from __future__ import annotations
 

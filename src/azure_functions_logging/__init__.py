@@ -1,4 +1,4 @@
-"""azure-functions-logging — Developer-friendly logging for Azure Functions Python."""
+"""azure-functions-logging-python — Developer-friendly logging for Azure Functions Python."""
 
 from __future__ import annotations
 

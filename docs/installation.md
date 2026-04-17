@@ -1,19 +1,19 @@
 # Installation
 
-Installing `azure-functions-logging` requires Python 3.10 or higher. The package has no external runtime dependencies.
+Installing `azure-functions-logging-python` requires Python 3.10 or higher. The package has no external runtime dependencies.
 
 ## Using pip
 
 Install from PyPI:
 
 ```bash
-pip install azure-functions-logging
+pip install azure-functions-logging-python
 ```
 
 To install a specific version:
 
 ```bash
-pip install azure-functions-logging==0.2.1
+pip install azure-functions-logging-python==0.2.1
 ```
 
 ## Adding to Requirements
@@ -23,7 +23,7 @@ For Azure Functions projects, add the package to your `requirements.txt` file to
 ```text
 # requirements.txt
 azure-functions
-azure-functions-logging==0.2.1
+azure-functions-logging-python==0.2.1
 ```
 
 Azure Functions reads `requirements.txt` during deployment and installs the listed packages in the remote environment.
@@ -36,7 +36,7 @@ If your project uses `pyproject.toml` for dependency management:
 [project]
 dependencies = [
     "azure-functions",
-    "azure-functions-logging>=0.2.0",
+    "azure-functions-logging-python>=0.2.0",
 ]
 ```
 
@@ -45,8 +45,8 @@ dependencies = [
 To contribute to the project or run tests locally, clone the repository and install in editable mode with development dependencies:
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-logging.git
-cd azure-functions-logging
+git clone https://github.com/yeongseon/azure-functions-logging-python.git
+cd azure-functions-logging-python
 pip install -e ".[dev]"
 ```
 
@@ -79,7 +79,7 @@ python -c "import azure_functions_logging; print(azure_functions_logging.__versi
 To upgrade to the latest version:
 
 ```bash
-pip install --upgrade azure-functions-logging
+pip install --upgrade azure-functions-logging-python
 ```
 
 ## Compatibility Notes

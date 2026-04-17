@@ -1,6 +1,6 @@
 # Contributing Guide
 
-We welcome contributions to the `azure-functions-logging` project.
+We welcome contributions to the `azure-functions-logging-python` project.
 
 ## How to Contribute
 

@@ -1,4 +1,4 @@
-"""Runtime contract tests for azure-functions-logging.
+"""Runtime contract tests for azure-functions-logging-python.
 
 These tests lock the observable behavior that users depend on across
 environments.  They assert *outcomes* (output shape, field presence,
@@ -11,7 +11,7 @@ Covers:
 - Duplicate output prevention (Azure mode adds zero handlers)
 - Idempotency (multiple setup_logging calls produce no extra output)
 
-Ref: https://github.com/yeongseon/azure-functions-logging/issues/23
+Ref: https://github.com/yeongseon/azure-functions-logging-python/issues/23
 """
 
 from __future__ import annotations

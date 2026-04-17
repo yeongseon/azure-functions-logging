@@ -1,4 +1,4 @@
-"""E2E tests for azure-functions-logging on a real Azure Functions host.
+"""E2E tests for azure-functions-logging-python on a real Azure Functions host.
 
 Two test groups:
 1. HTTP-level: invoke /api/logme, verify 200 response.

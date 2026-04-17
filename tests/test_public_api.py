@@ -1,4 +1,4 @@
-"""Tests for the public API surface of azure-functions-logging."""
+"""Tests for the public API surface of azure-functions-logging-python."""
 
 import azure_functions_logging  # pyright: ignore[reportMissingImports]
 

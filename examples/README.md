@@ -1,6 +1,6 @@
 # Examples
 
-`azure-functions-logging` includes standalone example scripts that demonstrate
+`azure-functions-logging-python` includes standalone example scripts that demonstrate
 every public API feature. Each script runs without Azure Functions installed.
 
 | Role | Path | Description |

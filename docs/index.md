@@ -2,7 +2,7 @@
 
 Production-oriented, developer-friendly logging for the Azure Functions Python v2 programming model.
 
-`azure-functions-logging` keeps setup small while giving you structured context, cold start visibility, and practical local ergonomics.
+`azure-functions-logging-python` keeps setup small while giving you structured context, cold start visibility, and practical local ergonomics.
 
 ## Five-Second Start
 

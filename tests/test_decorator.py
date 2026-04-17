@@ -9,7 +9,7 @@ Covers:
 - Context param not found → no crash (Principle 3)
 - Decorator preserves function metadata (functools.wraps)
 
-Ref: https://github.com/yeongseon/azure-functions-logging/issues/22
+Ref: https://github.com/yeongseon/azure-functions-logging-python/issues/22
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 # DESIGN.md
 
-Design Principles for `azure-functions-logging`
+Design Principles for `azure-functions-logging-python`
 
 ## Purpose
 
@@ -12,7 +12,7 @@ This document defines the architectural boundaries and design principles of the 
 - Inject invocation context (invocation_id, function_name, trace_id) into log records automatically.
 - Detect cold starts without user intervention.
 - Keep the standard `logging` module as the foundation — no new logging API to learn.
-- Stay small enough to pair cleanly with `azure-functions-validation` and `azure-functions-openapi`.
+- Stay small enough to pair cleanly with `azure-functions-validation-python` and `azure-functions-openapi-python`.
 
 ## Non-Goals
 
@@ -157,10 +157,10 @@ bound.info("Processing")  # includes user_id + operation + invocation_id (from f
 
 ## Integration Boundaries
 
-- Invocation context belongs to `azure-functions-logging`
-- Request/response validation belongs to `azure-functions-validation`
-- OpenAPI generation belongs to `azure-functions-openapi`
-- Project diagnostics belong to `azure-functions-doctor`
+- Invocation context belongs to `azure-functions-logging-python`
+- Request/response validation belongs to `azure-functions-validation-python`
+- OpenAPI generation belongs to `azure-functions-openapi-python`
+- Project diagnostics belong to `azure-functions-doctor-python`
 
 ## Compatibility Policy
 
