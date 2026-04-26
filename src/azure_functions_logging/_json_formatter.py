@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import logging
+from typing import Any
 
 _STANDARD_RECORD_FIELDS: set[str] = {
     "args",
@@ -38,12 +39,30 @@ _CONTEXT_FIELDS: set[str] = {
 }
 
 
+def _json_default(value: Any) -> str:
+    """Fallback serializer for ``json.dumps``.
+
+    A logging library must never lose log records because of an unserializable
+    ``extra`` value (datetime, Decimal, UUID, dataclass, exception, request
+    objects, etc.). This callable coerces unknown values to ``str(value)`` and
+    returns a sentinel string if even ``str()`` raises, so the formatter always
+    produces a valid JSON document.
+    """
+    try:
+        return str(value)
+    except Exception:
+        return f"<unserializable:{type(value).__name__}>"
+
+
 class JsonFormatter(logging.Formatter):
     """Structured JSON log formatter.
 
     Output is newline-delimited JSON (NDJSON), with one JSON object per log line.
     Context fields (invocation_id, function_name, etc.) are included when present
     on the LogRecord (set by ContextFilter).
+
+    Unserializable values in ``extra`` are coerced to strings via
+    :func:`_json_default` rather than dropping the log record.
     """
 
     def __init__(self) -> None:
@@ -74,4 +93,4 @@ class JsonFormatter(logging.Formatter):
             "extra": extra,
         }
 
-        return json.dumps(payload, ensure_ascii=False)
+        return json.dumps(payload, ensure_ascii=False, default=_json_default)

@@ -5,6 +5,55 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+_RESERVED_LOG_RECORD_KEYS: frozenset[str] = frozenset(
+    {
+        "args",
+        "asctime",
+        "created",
+        "exc_info",
+        "exc_text",
+        "filename",
+        "funcName",
+        "levelname",
+        "levelno",
+        "lineno",
+        "message",
+        "module",
+        "msecs",
+        "msg",
+        "name",
+        "pathname",
+        "process",
+        "processName",
+        "relativeCreated",
+        "stack_info",
+        "taskName",
+        "thread",
+        "threadName",
+    }
+)
+
+
+def _sanitize_extra(extra: dict[str, Any]) -> dict[str, Any]:
+    """Rename keys that collide with reserved ``LogRecord`` attributes.
+
+    ``logging.Logger._log`` raises ``KeyError`` if ``extra`` contains a key that
+    shadows a built-in record attribute. Rather than crash the user's code, we
+    prefix the offending keys with ``extra_`` so the value still reaches the
+    formatter under a deterministic name.
+    """
+    if not extra:
+        return extra
+    if not any(key in _RESERVED_LOG_RECORD_KEYS for key in extra):
+        return extra
+    sanitized: dict[str, Any] = {}
+    for key, value in extra.items():
+        if key in _RESERVED_LOG_RECORD_KEYS:
+            sanitized[f"extra_{key}"] = value
+        else:
+            sanitized[key] = value
+    return sanitized
+
 
 class FunctionLogger:
     """Wrapper around a standard ``logging.Logger`` with context binding.
@@ -65,6 +114,7 @@ class FunctionLogger:
         extra = kwargs.pop("extra", None) or {}
         extra.update(kwargs)
         extra.update(self._context)
+        extra = _sanitize_extra(extra)
         self._logger.log(
             level,
             msg,

@@ -23,10 +23,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://yeongseon.github.io/azure-functions-logging/"
-Documentation = "https://yeongseon.github.io/azure-functions-logging/"
-Repository = "https://github.com/yeongseon/azure-functions-logging"
-Issues = "https://github.com/yeongseon/azure-functions-logging/issues"
+Homepage = "https://yeongseon.github.io/azure-functions-logging-python/"
+Documentation = "https://yeongseon.github.io/azure-functions-logging-python/"
+Repository = "https://github.com/yeongseon/azure-functions-logging-python"
+Issues = "https://github.com/yeongseon/azure-functions-logging-python/issues"
 
 [project.optional-dependencies]
 dev = [

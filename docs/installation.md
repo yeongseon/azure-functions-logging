@@ -45,7 +45,7 @@ dependencies = [
 To contribute to the project or run tests locally, clone the repository and install in editable mode with development dependencies:
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-logging.git
+git clone https://github.com/yeongseon/azure-functions-logging-python.git
 cd azure-functions-logging
 pip install -e ".[dev]"
 ```

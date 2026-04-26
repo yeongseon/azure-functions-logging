@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal
 import json
 import logging
 import sys
+import uuid
 
 from azure_functions_logging._json_formatter import JsonFormatter
 
@@ -107,3 +110,51 @@ def test_timestamp_is_iso8601_with_timezone() -> None:
 
     assert parsed.tzinfo is not None
     assert parsed.utcoffset() == timezone.utc.utcoffset(parsed)
+
+
+def test_unserializable_extra_does_not_drop_log_line() -> None:
+    """Issue #77: a logging library must never drop logs because of unserializable extra."""
+    formatter = JsonFormatter()
+    record = _make_record(msg="payload")
+    record.when = datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    record.amount = Decimal("1.23")
+    record.request_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
+
+    output = formatter.format(record)
+    payload = json.loads(output)
+
+    assert payload["message"] == "payload"
+    assert payload["extra"]["when"] == "2026-01-02 03:04:05+00:00"
+    assert payload["extra"]["amount"] == "1.23"
+    assert payload["extra"]["request_id"] == "12345678-1234-5678-1234-567812345678"
+
+
+def test_unserializable_extra_with_dataclass_falls_back_to_str() -> None:
+    @dataclass
+    class Order:
+        id: str
+        total: int
+
+    formatter = JsonFormatter()
+    record = _make_record(msg="order")
+    record.order = Order(id="o-1", total=42)
+
+    payload = json.loads(formatter.format(record))
+
+    assert "order" in payload["extra"]
+    assert "Order" in payload["extra"]["order"]
+    assert "o-1" in payload["extra"]["order"]
+
+
+def test_unserializable_extra_where_str_raises_returns_sentinel() -> None:
+    class Hostile:
+        def __str__(self) -> str:
+            raise RuntimeError("no")
+
+    formatter = JsonFormatter()
+    record = _make_record(msg="hostile")
+    record.bad = Hostile()
+
+    payload = json.loads(formatter.format(record))
+
+    assert payload["extra"]["bad"] == "<unserializable:Hostile>"

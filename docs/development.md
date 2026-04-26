@@ -13,7 +13,7 @@ This guide explains how to set up a development environment for `azure-functions
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yeongseon/azure-functions-logging.git
+   git clone https://github.com/yeongseon/azure-functions-logging-python.git
    cd azure-functions-logging
    ```
 
