@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ._context import inject_context
+from ._context import inject_context, logging_context, reset_context
 from ._decorator import get_logging_metadata, with_context
 from ._filters import RedactionFilter, SamplingFilter
 from ._json_formatter import JsonFormatter
@@ -18,6 +18,8 @@ __all__ = [
     "get_logging_metadata",
     "get_logger",
     "inject_context",
+    "logging_context",
+    "reset_context",
     "setup_logging",
     "with_context",
 ]

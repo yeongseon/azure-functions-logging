@@ -16,6 +16,8 @@ class TestAPISurface:
             "get_logging_metadata",
             "get_logger",
             "inject_context",
+            "logging_context",
+            "reset_context",
             "setup_logging",
             "with_context",
         }
@@ -35,6 +37,8 @@ class TestAPISurface:
             get_logger,
             get_logging_metadata,
             inject_context,
+            logging_context,
+            reset_context,
         )
 
     def test_get_logger_is_callable(self) -> None:

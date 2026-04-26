@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 import contextvars
 import logging
 from typing import Any
@@ -104,3 +106,43 @@ def inject_context(context: Any) -> None:
         cold_start_var.set(_check_cold_start())
     except Exception:  # nosec B110 — Principle 3: context failures are silent
         pass
+
+
+def reset_context() -> None:
+    """Clear every invocation context variable.
+
+    Call this after an invocation completes when you used ``inject_context()``
+    manually. Without resetting, contextvar values can leak across reused
+    Azure Functions worker invocations and across async/thread boundaries —
+    a subsequent log line may carry a stale ``invocation_id`` belonging to an
+    earlier request.
+
+    Safe to call repeatedly. Setting to ``None`` is the documented "absent"
+    state for every context field (matches ``ContextVar`` defaults).
+    """
+    invocation_id_var.set(None)
+    function_name_var.set(None)
+    trace_id_var.set(None)
+    cold_start_var.set(None)
+
+
+@contextmanager
+def logging_context(context: Any) -> Iterator[None]:
+    """Context manager wrapping ``inject_context`` + ``reset_context``.
+
+    Recommended pattern when handlers don't use the ``with_context`` decorator::
+
+        def handler(req, context):
+            with logging_context(context):
+                logger.info("processing")
+                ...
+
+    Guarantees ``reset_context()`` runs even if the body raises, preventing
+    invocation context from leaking into subsequent invocations on the same
+    worker.
+    """
+    inject_context(context)
+    try:
+        yield
+    finally:
+        reset_context()

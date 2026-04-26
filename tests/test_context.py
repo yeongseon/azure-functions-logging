@@ -14,6 +14,8 @@ from azure_functions_logging._context import (
     function_name_var,
     inject_context,
     invocation_id_var,
+    logging_context,
+    reset_context,
     trace_id_var,
 )
 
@@ -170,3 +172,60 @@ def test_inject_context_resets_vars_on_failure() -> None:
     assert invocation_id_var.get() is None
     assert function_name_var.get() is None
     assert trace_id_var.get() is None
+
+
+def test_reset_context_clears_all_contextvars() -> None:
+    invocation_id_var.set("inv-x")
+    function_name_var.set("fn-x")
+    trace_id_var.set("trace-x")
+    cold_start_var.set(True)
+
+    reset_context()
+
+    assert invocation_id_var.get() is None
+    assert function_name_var.get() is None
+    assert trace_id_var.get() is None
+    assert cold_start_var.get() is None
+
+
+def test_reset_context_is_idempotent() -> None:
+    reset_context()
+    reset_context()
+
+    assert invocation_id_var.get() is None
+    assert cold_start_var.get() is None
+
+
+def test_logging_context_sets_then_resets() -> None:
+    context = SimpleNamespace(
+        invocation_id="inv-cm",
+        function_name="fn-cm",
+        trace_context=SimpleNamespace(
+            trace_parent="00-cccccccccccccccccccccccccccccccc-2222222222222222-01"
+        ),
+    )
+
+    with logging_context(context):
+        assert invocation_id_var.get() == "inv-cm"
+        assert function_name_var.get() == "fn-cm"
+        assert trace_id_var.get() == "cccccccccccccccccccccccccccccccc"
+        assert cold_start_var.get() is True
+
+    assert invocation_id_var.get() is None
+    assert function_name_var.get() is None
+    assert trace_id_var.get() is None
+    assert cold_start_var.get() is None
+
+
+def test_logging_context_resets_even_when_body_raises() -> None:
+    context = SimpleNamespace(invocation_id="inv-raise", function_name="fn-raise")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        with logging_context(context):
+            assert invocation_id_var.get() == "inv-raise"
+            raise RuntimeError("boom")
+
+    assert invocation_id_var.get() is None
+    assert function_name_var.get() is None
+    assert trace_id_var.get() is None
+    assert cold_start_var.get() is None

@@ -88,6 +88,8 @@ def test_public_api_exports() -> None:
         "get_logging_metadata",
         "get_logger",
         "inject_context",
+        "logging_context",
+        "reset_context",
         "setup_logging",
         "with_context",
     }

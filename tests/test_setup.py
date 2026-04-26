@@ -94,6 +94,7 @@ def test_setup_logging_is_idempotent_per_logger_name() -> None:
     second.handlers.clear()
     second.filters.clear()
 
+
 def test_is_functions_environment() -> None:
     with patch.dict(os.environ, {}, clear=True):
         assert _is_functions_environment() is False
@@ -122,3 +123,33 @@ def test_setup_logging_functions_formatter_applied_in_azure_env() -> None:
 
     root.handlers = []
     root.filters.clear()
+
+
+def test_setup_logging_in_azure_env_does_not_install_duplicate_context_filters() -> None:
+    root = logging.getLogger()
+    root.handlers = [logging.StreamHandler()]
+    root.filters.clear()
+
+    import azure_functions_logging._setup as setup_mod
+
+    setup_mod._configured_loggers.clear()
+
+    with patch.dict(os.environ, {"FUNCTIONS_WORKER_RUNTIME": "python"}, clear=True):
+        setup_logging()
+        setup_logging()
+
+    handler = root.handlers[0]
+    context_filters_on_handler = [f for f in handler.filters if isinstance(f, ContextFilter)]
+    context_filters_on_root = [f for f in root.filters if isinstance(f, ContextFilter)]
+
+    assert len(context_filters_on_handler) == 1
+    assert len(context_filters_on_root) == 1
+
+    root.handlers = []
+    root.filters.clear()
+
+
+def test_is_functions_environment_with_only_website_instance_id_is_false() -> None:
+    with patch.dict(os.environ, {"WEBSITE_INSTANCE_ID": "abc123"}, clear=True):
+        assert _is_functions_environment() is False
+        assert _is_azure_hosted() is True
