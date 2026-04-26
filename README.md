@@ -40,6 +40,8 @@ Azure Functions Python logging has specific failure modes that generic logging l
 - **Noise control** — `SamplingFilter` rate-limits chatty third-party loggers
 - **PII protection** — `RedactionFilter` masks sensitive fields before they reach log aggregation
 
+> **Scope disclaimer.** This package writes structured JSON to Python `logging` / stdout. How those fields appear in Application Insights depends on the Azure Functions host, worker, logging configuration, and ingestion pipeline. The library does not own ingestion or schema mapping — both `customDimensions`-parsed and raw-`message` shapes are valid in production.
+
 ## Before / After
 
 **Without** `azure-functions-logging` — plain `print()` output, no context, no structure:
@@ -102,11 +104,11 @@ Production output (NDJSON for Application Insights):
 
 > Every log carries `invocation_id` and `cold_start`. Queryable in Application Insights. Zero `print()` statements.
 
-> **Note:** The exact Application Insights schema depends on your ingestion pipeline. The queries below assume structured JSON fields appear in `customDimensions`.
+> **Note:** The exact Application Insights schema depends on your ingestion pipeline. In some deployments JSON fields are parsed into `customDimensions`; in others the JSON stays inside the `message` column. Examples for both shapes are below.
 
 ### Query in Application Insights
 
-Once your logs flow as structured JSON, query them in Application Insights:
+#### When JSON fields are parsed into `customDimensions`
 
 ```kql
 traces
@@ -120,6 +122,26 @@ Find all cold starts in the last hour:
 ```kql
 traces
 | where customDimensions.cold_start == "true"
+| where timestamp > ago(1h)
+| summarize count() by bin(timestamp, 5m)
+```
+
+#### When JSON remains in the `message` column
+
+```kql
+traces
+| extend payload = parse_json(message)
+| where tostring(payload.invocation_id) == "abc-123-def"
+| project timestamp, tostring(payload.message), tostring(payload.cold_start), tostring(payload.function_name)
+| order by timestamp asc
+```
+
+Find all cold starts in the last hour:
+
+```kql
+traces
+| extend payload = parse_json(message)
+| where tostring(payload.cold_start) == "true"
 | where timestamp > ago(1h)
 | summarize count() by bin(timestamp, 5m)
 ```
@@ -210,6 +232,8 @@ curl -s "https://<your-app>.azurewebsites.net/api/logme?correlation_id=demo-123"
 - `function_name` — the Azure Functions function name
 - `trace_id` — trace context from the platform
 - `cold_start` — `True` on first invocation of this worker process
+
+> **`cold_start` semantics.** `cold_start=True` means *the first invocation observed by this Python worker process after module load*. It is **not** a platform-level cold start metric and does not correspond to App Service plan / instance allocation cold starts reported by Azure Functions metrics. Subsequent invocations on the same worker emit `cold_start=False` until the worker is recycled.
 
 ```python
 def my_function(req, context):
