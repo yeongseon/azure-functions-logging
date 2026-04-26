@@ -2,12 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+### Documentation
+
+- Clarify Application Insights ingestion, cold_start semantics, and KQL shapes (#85) 
+
+### Features
+
+- *(context)* Add reset_context/logging_context and category-aware host.json warnings (#84) 
+
+### Miscellaneous Tasks
+
+- *(deps)* Bump softprops/action-gh-release from 2.6.1 to 3.0.0 (#72) 
+- *(deps)* Bump github/codeql-action from 4.35.1 to 4.35.2 (#71) 
+- *(deps)* Bump ruff from 0.15.10 to 0.15.12 (#75) 
+- *(deps)* Bump mypy from 1.20.0 to 1.20.2 (#76) 
+
+### Other
+
+- Bump version to 0.5.3 
+
+### Testing
+
+- Bump expected __version__ to 0.5.3 ahead of release-patch 
+
 ### Bug Fixes
 
 - Release pipeline + correctness hotfixes (#77) (#80) 
 
 ### Documentation
 
+- Update changelog 
 - Add Request Flow and Runtime Relationship section to architecture 
 
 ### Miscellaneous Tasks
