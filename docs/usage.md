@@ -173,6 +173,9 @@ Behavior:
 
 No manual state tracking needed.
 
+!!! note "What `cold_start` actually measures"
+    `cold_start=True` means *the first invocation observed by this Python worker process after module load*. It is **not** a platform-level cold start metric and does not correspond to App Service plan / instance allocation cold starts reported by Azure Functions metrics. The flag is process-global and flips back to `False` after the first `inject_context()` call on the worker.
+
 ### Example with Duration
 
 ```python
