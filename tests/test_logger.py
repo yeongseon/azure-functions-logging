@@ -132,3 +132,56 @@ def test_log_returns_early_when_level_disabled() -> None:
     logger.info("should not log", order_id="o-999")
 
     underlying.log.assert_not_called()
+
+
+def test_reserved_logrecord_keys_in_kwargs_are_prefixed_not_raised() -> None:
+    """Issue #77: kwargs colliding with LogRecord reserved attrs must not crash."""
+    underlying = _mock_underlying_logger()
+    logger = FunctionLogger(underlying)
+
+    logger.info("hi", name="custom", message="user-supplied", levelname="INFO")
+
+    underlying.log.assert_called_once()
+    _, kwargs = underlying.log.call_args
+    extra = kwargs["extra"]
+    assert extra["extra_name"] == "custom"
+    assert extra["extra_message"] == "user-supplied"
+    assert extra["extra_levelname"] == "INFO"
+    assert "name" not in extra
+    assert "message" not in extra
+    assert "levelname" not in extra
+
+
+def test_reserved_keys_in_explicit_extra_arg_are_also_prefixed() -> None:
+    underlying = _mock_underlying_logger()
+    logger = FunctionLogger(underlying)
+
+    logger.info("hi", extra={"name": "custom", "user_id": "u-1"})
+
+    _, kwargs = underlying.log.call_args
+    extra = kwargs["extra"]
+    assert extra["extra_name"] == "custom"
+    assert extra["user_id"] == "u-1"
+
+
+def test_non_reserved_kwargs_still_pass_through_unchanged() -> None:
+    underlying = _mock_underlying_logger()
+    logger = FunctionLogger(underlying)
+
+    logger.info("hi", order_id="o-1", region="eastus")
+
+    _, kwargs = underlying.log.call_args
+    extra = kwargs["extra"]
+    assert extra == {"order_id": "o-1", "region": "eastus"}
+
+
+def test_reserved_keys_via_real_stdlib_logger_does_not_raise() -> None:
+    """End-to-end: the previously crashing call must now succeed against real stdlib."""
+    import logging as stdlib_logging
+
+    real_logger = stdlib_logging.getLogger("test.reserved.keys.regression")
+    real_logger.addHandler(stdlib_logging.NullHandler())
+    real_logger.setLevel(stdlib_logging.INFO)
+    logger = FunctionLogger(real_logger)
+
+    logger.info("hi", name="custom", message="user-supplied")
