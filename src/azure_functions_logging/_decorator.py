@@ -13,13 +13,7 @@ import functools
 import inspect
 from typing import Any, Callable, TypeVar, overload
 
-from ._context import (
-    cold_start_var,
-    function_name_var,
-    inject_context,
-    invocation_id_var,
-    trace_id_var,
-)
+from ._context import inject_context, reset_context
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -29,7 +23,9 @@ _TOOLKIT_META_ATTR = "_azure_functions_metadata"
 
 
 def _merge_toolkit_metadata(
-    fn: Callable[..., Any], namespace: str, payload: dict[str, Any],
+    fn: Callable[..., Any],
+    namespace: str,
+    payload: dict[str, Any],
 ) -> None:
     """Merge toolkit metadata into the convention attribute, preserving other namespaces."""
     existing: dict[str, Any] = getattr(fn, _TOOLKIT_META_ATTR, {})
@@ -37,14 +33,6 @@ def _merge_toolkit_metadata(
         existing = {}
     existing = {**existing, namespace: payload}
     setattr(fn, _TOOLKIT_META_ATTR, existing)
-
-
-def _reset_context_vars() -> None:
-    """Reset all invocation context variables to None."""
-    invocation_id_var.set(None)
-    function_name_var.set(None)
-    trace_id_var.set(None)
-    cold_start_var.set(None)
 
 
 def _find_context_arg(
@@ -82,7 +70,7 @@ def _wrap_sync(func: _F, param: str) -> _F:
         try:
             return func(*args, **kwargs)
         finally:
-            _reset_context_vars()
+            reset_context()
 
     _merge_toolkit_metadata(wrapper, "logging", {"version": 1, "context_param": param})
     return wrapper  # type: ignore[return-value]
@@ -99,7 +87,7 @@ def _wrap_async(func: _F, param: str) -> _F:
         try:
             return await func(*args, **kwargs)
         finally:
-            _reset_context_vars()
+            reset_context()
 
     _merge_toolkit_metadata(wrapper, "logging", {"version": 1, "context_param": param})
     return wrapper  # type: ignore[return-value]
@@ -155,7 +143,6 @@ def with_context(
 
     # Called as @with_context(...) (with parentheses)
     return decorator
-
 
 
 def get_logging_metadata(func: Any) -> dict[str, Any] | None:

@@ -18,8 +18,24 @@ _HOST_LEVEL_TO_LOGGING: dict[str, int] = {
 }
 
 
+def _resolve_host_level(value: object) -> int | None:
+    if not isinstance(value, str):
+        return None
+    return _HOST_LEVEL_TO_LOGGING.get(value.lower())
+
+
 def warn_host_json_level_conflict(configured_level: int) -> None:
-    """Warn when host.json suppresses logs below setup_logging level."""
+    """Warn when any ``host.json`` ``logLevel`` entry suppresses logs below ``configured_level``.
+
+    Azure Functions honors category-specific keys under ``logging.logLevel``
+    (e.g. ``Function``, ``Function.<name>``, ``Host.Results``,
+    ``Host.Aggregator``) in addition to ``default``. Inspecting only ``default``
+    misses the common case where ``default = Information`` while a specific
+    function category is set to ``Warning`` or ``None`` and silently drops the
+    user's logs.
+
+    This helper iterates every category and warns once per offending entry.
+    """
     host_path = Path.cwd() / "host.json"
     if not host_path.exists():
         return
@@ -30,24 +46,30 @@ def warn_host_json_level_conflict(configured_level: int) -> None:
         return
 
     try:
-        host_level = host_config["logging"]["logLevel"]["default"]
+        log_levels = host_config["logging"]["logLevel"]
     except Exception:
         return
 
-    if not isinstance(host_level, str):
+    if not isinstance(log_levels, dict):
         return
 
-    resolved_level = _HOST_LEVEL_TO_LOGGING.get(host_level.lower())
-    if resolved_level is None:
-        return
+    configured_level_name = logging.getLevelName(configured_level)
 
-    if resolved_level > configured_level:
-        configured_level_name = logging.getLevelName(configured_level)
+    for category, raw_level in log_levels.items():
+        if not isinstance(category, str):
+            continue
+        resolved_level = _resolve_host_level(raw_level)
+        if resolved_level is None:
+            continue
+        if resolved_level <= configured_level:
+            continue
+
+        scope = "default" if category == "default" else f"category '{category}'"
         warnings.warn(
             (
-                f"host.json logLevel.default is set to '{host_level}' which is more restrictive "
-                f"than the configured level '{configured_level_name}'. Logs below '{host_level}' "
-                "will be suppressed by the Azure Functions host."
+                f"host.json logLevel for {scope} is set to '{raw_level}' which is more "
+                f"restrictive than the configured level '{configured_level_name}'. Logs "
+                f"below '{raw_level}' will be suppressed by the Azure Functions host."
             ),
             stacklevel=3,
         )

@@ -142,7 +142,7 @@ pip install azure-functions-logging
 
 ```python
 import azure.functions as func
-from azure_functions_logging import get_logger, inject_context, setup_logging
+from azure_functions_logging import get_logger, logging_context, setup_logging
 
 setup_logging()
 logger = get_logger(__name__)
@@ -151,12 +151,23 @@ app = func.FunctionApp()
 
 @app.route(route="hello")
 def hello(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
-    inject_context(context)  # binds invocation_id, function_name, cold_start
+    with logging_context(context):  # binds invocation_id, function_name, cold_start; resets on exit
+        logger.info("Request received")
+        # {"level": "INFO", "invocation_id": "abc-123", "cold_start": true, ...}
 
+        return func.HttpResponse("OK")
+```
+
+`logging_context` is the recommended primary pattern: it injects context on enter and **always** resets on exit (even when the handler raises), which prevents stale context from leaking into the next invocation on a reused worker.
+
+For lower-level control or when integrating with custom middleware, `inject_context(context)` and `reset_context()` are exposed individually:
+
+```python
+inject_context(context)
+try:
     logger.info("Request received")
-    # {"level": "INFO", "invocation_id": "abc-123", "cold_start": true, ...}
-
-    return func.HttpResponse("OK")
+finally:
+    reset_context()
 ```
 
 Start the Functions host locally (using the [e2e example app](examples/e2e_app)):

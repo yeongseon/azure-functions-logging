@@ -143,3 +143,73 @@ def test_no_warning_when_host_level_is_unrecognized_string(
         warn_host_json_level_conflict(logging.DEBUG)
 
     assert len(warning_list) == 0
+
+
+def test_warns_per_category_when_specific_category_is_more_restrictive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_host_json(
+        tmp_path / "host.json",
+        {
+            "logging": {
+                "logLevel": {
+                    "default": "Information",
+                    "Function.MyFunction": "Warning",
+                    "Host.Results": "Error",
+                }
+            }
+        },
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always")
+        warn_host_json_level_conflict(logging.INFO)
+
+    messages = [str(w.message) for w in warning_list]
+    assert any("Function.MyFunction" in m and "'Warning'" in m for m in messages)
+    assert any("Host.Results" in m and "'Error'" in m for m in messages)
+    assert not any("default" in m for m in messages)
+
+
+def test_no_warning_when_all_categories_permissive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_host_json(
+        tmp_path / "host.json",
+        {
+            "logging": {
+                "logLevel": {
+                    "default": "Information",
+                    "Function": "Debug",
+                    "Host.Aggregator": "Trace",
+                }
+            }
+        },
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always")
+        warn_host_json_level_conflict(logging.INFO)
+
+    assert len(warning_list) == 0
+
+
+def test_no_warning_when_log_level_block_is_not_a_dict(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_host_json(
+        tmp_path / "host.json",
+        {"logging": {"logLevel": "Warning"}},
+    )
+    monkeypatch.chdir(tmp_path)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always")
+        warn_host_json_level_conflict(logging.INFO)
+
+    assert len(warning_list) == 0
