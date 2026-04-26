@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ### Bug Fixes
 
+- Release pipeline + correctness hotfixes (#77) (#80) 
+
+### Documentation
+
+- Add Request Flow and Runtime Relationship section to architecture 
+
+### Miscellaneous Tasks
+
+- *(deps)* Bump actions/github-script from 8.0.0 to 9.0.0 
+- *(deps)* Bump actions/upload-artifact from 7.0.0 to 7.0.1 
+
+### Bug Fixes
+
 - Rewrite design principle per Oracle review 
 - Switch Mermaid fence format to fence_div_format for rendering 
 - Make setup_logging idempotent per logger_name (#34) 
@@ -13,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ### Documentation
 
+- Update changelog 
 - Apply Oracle review fixes to Before/After section (#65) 
 - Add ecosystem table to README 
 - Add llms.txt for LLM-friendly documentation (#56) (#57) 
