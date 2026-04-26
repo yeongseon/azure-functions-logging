@@ -46,7 +46,7 @@ To contribute to the project or run tests locally, clone the repository and inst
 
 ```bash
 git clone https://github.com/yeongseon/azure-functions-logging-python.git
-cd azure-functions-logging
+cd azure-functions-logging-python
 pip install -e ".[dev]"
 ```
 

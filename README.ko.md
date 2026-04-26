@@ -57,7 +57,7 @@ pip install azure-functions-logging
 
 ```bash
 git clone https://github.com/yeongseon/azure-functions-logging-python.git
-cd azure-functions-logging
+cd azure-functions-logging-python
 pip install -e .[dev]
 ```
 

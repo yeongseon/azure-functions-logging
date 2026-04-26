@@ -14,7 +14,7 @@ This guide explains how to set up a development environment for `azure-functions
 
    ```bash
    git clone https://github.com/yeongseon/azure-functions-logging-python.git
-   cd azure-functions-logging
+   cd azure-functions-logging-python
    ```
 
 2. Install the package in editable mode with development dependencies:

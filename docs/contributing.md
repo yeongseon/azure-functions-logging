@@ -8,8 +8,8 @@ Thank you for your interest in contributing to `azure-functions-logging`. This g
 2. Clone your fork:
 
    ```bash
-   git clone https://github.com/<your-username>/azure-functions-logging.git
-   cd azure-functions-logging
+   git clone https://github.com/<your-username>/azure-functions-logging-python.git
+   cd azure-functions-logging-python
    ```
 
 3. Install development dependencies:
