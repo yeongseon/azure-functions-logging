@@ -23,7 +23,7 @@ class TestAPISurface:
         }
 
     def test_version_is_0_5_0(self) -> None:
-        assert azure_functions_logging.__version__ == "0.5.2"
+        assert azure_functions_logging.__version__ == "0.5.3"
 
     def test_version_is_string(self) -> None:
         assert isinstance(azure_functions_logging.__version__, str)
