@@ -1,6 +1,6 @@
 # Azure Functions Logging
 
-> Part of the [Azure Functions Python DX Toolkit](https://github.com/yeongseon/azure-functions-python-dx) — a collection of small tools for improving Azure Functions Python developer experience.
+> Part of the [Azure Functions Python Cookbook](https://github.com/yeongseon/azure-functions-cookbook-python) — a collection of small tools for improving Azure Functions Python developer experience.
 
 [![PyPI](https://img.shields.io/pypi/v/azure-functions-logging.svg)](https://pypi.org/project/azure-functions-logging/)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-logging/)
@@ -19,7 +19,7 @@ Surfaces `invocation_id`, detects cold starts, warns on `host.json` misconfig, a
 
 ---
 
-Part of the **Azure Functions Python DX Toolkit**
+Part of the **Azure Functions Python Cookbook**
 → Bring FastAPI-like developer experience to Azure Functions
 
 ## Why this exists
@@ -395,7 +395,7 @@ Create bound loggers per-invocation. Do not cache them at module level.
 
 ## Ecosystem
 
-This package is part of the **Azure Functions Python DX Toolkit**.
+This package is part of the **Azure Functions Python Cookbook**.
 
 **Design principle:** `azure-functions-logging` owns structured logging and invocation-aware observability. It enriches Python's standard `logging` — it does not replace it. Adjacent concerns belong to [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi-python) (API documentation and spec generation), [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation-python) (request/response validation and serialization), and [`azure-functions-langgraph`](https://github.com/yeongseon/azure-functions-langgraph-python) (LangGraph runtime exposure).
 
